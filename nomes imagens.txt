@@ -1,0 +1,119 @@
+Checklist de Imagens (Pasta img/)
+
+Lembre-se do padrão:
+
+Sprite Masculino: [nome]_m.png
+
+Sprite Feminino: [nome]_f.png
+
+Emblema (Ícone pequeno): emblema_[nome].png
+
+1. Aprendizes
+
+Aprendiz: aprendiz_m.png, aprendiz_f.png, emblema_aprendiz.png
+
+Super Aprendiz: super_aprendiz_m.png, super_aprendiz_f.png, emblema_super_aprendiz.png
+
+Super Aprendiz Expandido: super_aprendiz_expandido_m.png, super_aprendiz_expandido_f.png, emblema_super_aprendiz_expandido.png
+
+2. Espadachins (Físicos / Tankers)
+
+Espadachim: espadachim_m.png, espadachim_f.png, emblema_espadachim.png
+
+Cavaleiro: cavaleiro_m.png, cavaleiro_f.png, emblema_cavaleiro.png
+
+Cavaleiro Rúnico: cavaleiro_runico_m.png, cavaleiro_runico_f.png, emblema_cavaleiro_runico.png
+
+Cavaleiro Dragão: cavaleiro_dragao_m.png, cavaleiro_dragao_f.png, emblema_cavaleiro_dragao.png
+
+Templário: templario_m.png, templario_f.png, emblema_templario.png
+
+Guardião Real: guardiao_real_m.png, guardiao_real_f.png, emblema_guardiao_real.png
+
+Guarda Imperial: guarda_imperial_m.png, guarda_imperial_f.png, emblema_guarda_imperial.png
+
+3. Magos (Mágicos)
+
+Mago: mago_m.png, mago_f.png, emblema_mago.png
+
+Bruxo: bruxo_m.png, bruxo_f.png, emblema_bruxo.png
+
+Arcano: arcano_m.png, arcano_f.png, emblema_arcano.png
+
+Arquimago (Cl. 4): arquimago_cl_4_m.png, arquimago_cl_4_f.png, emblema_arquimago_cl_4.png
+
+Sábio: sabio_m.png, sabio_f.png, emblema_sabio.png
+
+Feiticeiro: feiticeiro_m.png, feiticeiro_f.png, emblema_feiticeiro.png
+
+Mestre Elementalista: mestre_elementalista_m.png, mestre_elementalista_f.png, emblema_mestre_elementalista.png
+
+4. Arqueiros (Longa Distância)
+
+Arqueiro: arqueiro_m.png, arqueiro_f.png, emblema_arqueiro.png
+
+Caçador: cacador_m.png, cacador_f.png, emblema_cacador.png
+
+Sentinela: sentinela_m.png, sentinela_f.png, emblema_sentinela.png
+
+Mestre Caçador: mestre_cacador_m.png, mestre_cacador_f.png, emblema_mestre_cacador.png
+
+(Classes Restritas por Gênero)
+
+Bardo: bardo_m.png, emblema_bardo.png
+
+Trovador: trovador_m.png, emblema_trovador.png
+
+Animador: animador_m.png, emblema_animador.png
+
+Odalisca: odalisca_f.png, emblema_odalisca.png
+
+Musa: musa_f.png, emblema_musa.png
+(Nota: O app também suporta bardo_f ou odalisca_m caso ocorra alguma anomalia nos dados salvos, mas pelo jogo, essas acima são as que você usará).
+
+5. Noviços (Suportes / Lutadores)
+
+Noviço: novico_m.png, novico_f.png, emblema_novico.png
+
+Sacerdote: sacerdote_m.png, sacerdote_f.png, emblema_sacerdote.png
+
+Arcebispo: arcebispo_m.png, arcebispo_f.png, emblema_arcebispo.png
+
+Cardeal: cardeal_m.png, cardeal_f.png, emblema_cardeal.png
+
+Monge: monge_m.png, monge_f.png, emblema_monge.png
+
+Shura: shura_m.png, shura_f.png, emblema_shura.png
+
+Inquisidor: inquisidor_m.png, inquisidor_f.png, emblema_inquisidor.png
+
+6. Mercadores (Comércio / Mecânica)
+
+Mercador: mercador_m.png, mercador_f.png, emblema_mercador.png
+
+Ferreiro: ferreiro_m.png, ferreiro_f.png, emblema_ferreiro.png
+
+Mecânico: mecanico_m.png, mecanico_f.png, emblema_mecanico.png
+
+Mestre da Forja: mestre_da_forja_m.png, mestre_da_forja_f.png, emblema_mestre_da_forja.png
+
+Alquimista: alquimista_m.png, alquimista_f.png, emblema_alquimista.png
+
+Bioquímico: bioquimico_m.png, bioquimico_f.png, emblema_bioquimico.png
+
+Biólogo: biologo_m.png, biologo_f.png, emblema_biologo.png
+
+7. Gatunos (Furtividade / Físicos)
+
+Gatuno: gatuno_m.png, gatuno_f.png, emblema_gatuno.png
+
+Mercenário: mercenario_m.png, mercenario_f.png, emblema_mercenario.png
+
+Sicário: sicario_m.png, sicario_f.png, emblema_sicario.png
+
+Algoz das Sombras: algoz_das_sombras_m.png, algoz_das_sombras_f.png, emblema_algoz_das_sombras.png
+
+Arruaceiro: arruaceiro_m.png, arruaceiro_f.png, emblema_arruaceiro.png
+
+Renegado: renegado_m.png, renegado_f.png, emblema_renegado.png
+
