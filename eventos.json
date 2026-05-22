@@ -1,0 +1,183 @@
+{
+  "eventos": [
+    {
+      "id": "evento_de_evolucao",
+      "nome": "Evento de Evolução",
+      "booster": true,
+      "moeda": "Moeda de Apoio",
+      "descricao": "Evento com Caixas Evolutivas de níveis progressivos e itens de apoio.",
+      "dataFim": "2026-05-31",
+      "requisitos": [
+        "Inscreva-se no evento",
+        "Tenha pelo menos um slot de personagem disponível",
+        "Use apenas um navegador ao se inscrever"
+      ],
+      "quests": [
+        {
+          "titulo": "Abrir Caixa Evolutiva",
+          "descricao": "Abra a caixa para ganhar itens de apoio e bônus de evento.",
+          "recompensa": "Itens de apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 1",
+          "descricao": "Mate 10 Fabre para conquistar a missão diária de apoio.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 11",
+          "descricao": "Mate 10 Esporo, 10 Jiboia e 10 Rabo-de-Verme na missão diária.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 20",
+          "descricao": "Mate 30 Besouro-Ladrão Fêmea, 30 Besouro-Ladrão Macho e 20 Esporo Venenoso.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 35",
+          "descricao": "Mate 30 Martin, 30 Esqueleto Operário e 10 Giearth.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 50",
+          "descricao": "Mate 30 Peixe-Espada, 30 Tritão e 30 Strouf.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 65",
+          "descricao": "Mate 30 Munak, 30 Bongun e 40 Sohee.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 80",
+          "descricao": "Mate 20 Relógio, 20 Punk e 20 Rideword.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 menos: Nv. 85",
+          "descricao": "Mate 20 Batedor, 30 Congelador e 30 Aquecedor.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 mais: Nv. 99",
+          "descricao": "Mate 30 Água, 30 Médio e 30 Amorfo em Juperos ou Caverna de Gelo.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 mais: Nv. 115",
+          "descricao": "Mate 30 Terra, 30 Grande e 30 Humanoide em Campo de Malaya ou Invasão ao Aeroplano.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 mais: Nv. 130",
+          "descricao": "Mate 30 Sombrio, 30 Pequeno e 30 Inseto em Fenda Dimensional, Túnel Kamidal ou Monte Kamidal.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 mais: Nv. 145",
+          "descricao": "Mate 30 Terra, 30 Médio e 30 Pequeno em Torre de Bifröst, Torre Distorcida ou Prisão de Prontera.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 mais: Nv. 160",
+          "descricao": "Mate 60 Despertador, 1 Visconde Coruja e 1 Marquês Coruja.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 mais: Nv. 175",
+          "descricao": "Mate 20 Xamã do Gelo, 20 Xamã do Fogo e 20 Raydric Poluto.",
+          "recompensa": "1 Moeda de Apoio"
+        },
+        {
+          "titulo": "Missões de Caça 99 mais: Nv. 190",
+          "descricao": "Mate 10 Porcellio Albino, 20 Garimpeiros e 10 Geodoliant.",
+          "recompensa": "1 Moeda de Apoio"
+        }
+      ],
+      "caixas": [
+        { "nivel": 1, "nome": "Caixa Evolutiva (nv.1)", "recompensas": ["Sino de Apoio", "Baú Vanguardista", "Capuz de Coelhinho Carinhoso", "Mochila Estudantil Vermelha", "Ticket de Arma Metálica"] },
+        { "nivel": 15, "nome": "Caixa Evolutiva (nv.15)", "recompensas": [] },
+        { "nivel": 30, "nome": "Caixa Evolutiva (nv.30)", "recompensas": ["Refinador de Arma Metálica"] },
+        { "nivel": 45, "nome": "Caixa Evolutiva (nv.45)", "recompensas": [] },
+        { "nivel": 60, "nome": "Caixa Evolutiva (nv.60)", "recompensas": ["Caixa de Sombrios Transcendentes"] },
+        { "nivel": 75, "nome": "Caixa Evolutiva (nv.75)", "recompensas": [] },
+        { "nivel": 90, "nome": "Caixa Evolutiva (nv.90)", "recompensas": [] },
+        { "nivel": 100, "nome": "Caixa Evolutiva (nv.100)", "recompensas": ["Tiara de Rideword", "Ticket de Armas de Apoio", "Ticket de Armadura Apoio", "Passe do Episódio 16"] },
+        { "nivel": 115, "nome": "Caixa Evolutiva (nv.115)", "recompensas": ["Refinador de Apoio +9", "Refinador de Armadura de Apoio"] },
+        { "nivel": 130, "nome": "Caixa Evolutiva (nv.130)", "recompensas": [] },
+        { "nivel": 145, "nome": "Caixa Evolutiva (nv.145)", "recompensas": ["Refinador de Apoio +11"] },
+        { "nivel": 160, "nome": "Caixa Evolutiva (nv.160)", "recompensas": [] },
+        { "nivel": 175, "nome": "Caixa Evolutiva (nv.175)", "recompensas": ["Refinador de Apoio +13"] },
+        { "nivel": 190, "nome": "Caixa Evolutiva (nv.190)", "recompensas": [] },
+        { "nivel": 200, "nome": "Caixa Evolutiva (nv.200)", "recompensas": ["Recompensa de Apoio 2026"] }
+      ],
+      "loja": [
+        {"nome": "Sino de Apoio", "custo": 10, "categoria": "Consumíveis", "npc": {"nome": "Secretária Lenore (invocada via Sino)", "local": "Evento / Invocada"}},
+        {"nome": "Ticket de Arma Metálica", "custo": 1, "categoria": "Refino", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Refinador de Arma Metálica", "custo": 5, "categoria": "Refino", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Ticket de Armadura Apoio", "custo": 20, "categoria": "Refino", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Ticket de Armas de Apoio", "custo": 20, "categoria": "Refino", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Refinador de Apoio +9", "custo": 20, "categoria": "Refino", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Refinador de Apoio +11", "custo": 20, "categoria": "Refino", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Refinador de Apoio +13", "custo": 20, "categoria": "Refino", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Poção de Vida (Evento)", "custo": 20, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Caixa de Defesa (Evento)", "custo": 20, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Poção Menor de Mana (Evento)", "custo": 1, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Elixir Rubro (Evento)", "custo": 1, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Bolinho Divino (Evento)", "custo": 1, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Poção Ilimitada (Evento)", "custo": 1, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Poção Infinita (Evento)", "custo": 1, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Passaporte (Evento)", "custo": 1, "categoria": "Consumíveis", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Caixa Física de Apoio", "custo": 1, "categoria": "Consumíveis", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Caixa Distante de Apoio", "custo": 1, "categoria": "Consumíveis", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Caixa Elemental de Apoio", "custo": 1, "categoria": "Consumíveis", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Caixa Mágica de Apoio", "custo": 1, "categoria": "Consumíveis", "subcategoria": "Apoio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Pedra Visual - Topo", "custo": 10, "categoria": "Encantamentos", "slot": "Topo", "npc": {"nome": "Aives San Laurein", "local": "Malangdo (152,133)"}},
+        {"nome": "Pedra Visual - Meio", "custo": 10, "categoria": "Encantamentos", "slot": "Meio", "npc": {"nome": "Aives San Laurein", "local": "Malangdo (152,133)"}},
+        {"nome": "Pedra Visual - Baixo", "custo": 10, "categoria": "Encantamentos", "slot": "Baixo", "npc": {"nome": "Aives San Laurein", "local": "Malangdo (152,133)"}},
+        {"nome": "Pedra Visual - Capa", "custo": 10, "categoria": "Encantamentos", "slot": "Capa", "npc": {"nome": "Aives San Laurein", "local": "Malangdo (152,133)"}},
+        {"nome": "Tickets e Equipamentos Metálicos (loja específica)", "custo": 1, "categoria": "Equipamentos", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Sabre Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Espadachim", "Cavaleiro", "Lorde", "Cavaleiro Rúnico", "Templário", "Paladino", "Guardião Real", "Guarda Imperial"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Pique Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Espadachim", "Cavaleiro", "Lorde", "Cavaleiro Rúnico", "Templário", "Paladino", "Guardião Real", "Guarda Imperial"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Mangual Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Noviço", "Sacerdote", "Sumo Sacerdote", "Arcebispo", "Cardeal", "Monge", "Mestre", "Shura", "Inquisidor"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Machado Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Mercador", "Ferreiro", "Mestre-Ferreiro", "Mecânico", "Mestre da Forja", "Alquimista", "Criador", "Bioquímico", "Biólogo"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Punhal Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Gatuno", "Mercenário", "Algoz", "Sicário", "Algoz das Sombras", "Arruaceiro", "Desordeiro", "Renegado", "Abismo"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Livro Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Mago", "Bruxo", "Arquimago", "Arcano", "Arquimago (Cl. 4)", "Sábio", "Professor", "Feiticeiro", "Mestre Elementalista"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Cajado Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Mago", "Bruxo", "Arquimago", "Arcano", "Arquimago (Cl. 4)", "Sábio", "Professor", "Feiticeiro", "Mestre Elementalista"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Katar Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Gatuno", "Mercenário", "Algoz", "Sicário", "Algoz das Sombras", "Arruaceiro", "Desordeiro", "Renegado", "Abismo"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Arco Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Arqueiro", "Caçador", "Atirador de Elite", "Sentinela", "Mestre Caçador", "Bardo", "Menestrel", "Trovador", "Animador", "Odalisca", "Cigana", "Musa"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Revólver Metálico", "ticket": "Ticket de Arma Metálica", "ticketQtd": 1, "categoria": "Equipamentos", "classes": ["Atirador de Elite", "Sentinela", "Mestre Caçador"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Caixa Sombria de Apoio", "custo": 15, "categoria": "Consumíveis", "subcategoria": "Sombrio", "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+
+        {"nome": "Arma de Apoio - Espada de Apoio Crítico", "ticket": "Ticket de Armas de Apoio", "ticketQtd": 1, "categoria": "Equipamentos", "subcategoria": "Apoio", "classes": ["Cavaleiro Rúnico"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Arma de Apoio - Lança de Apoio Draconiano", "ticket": "Ticket de Armas de Apoio", "ticketQtd": 1, "categoria": "Equipamentos", "subcategoria": "Apoio", "classes": ["Cavaleiro Rúnico"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Arma de Apoio - Lança de Apoio Hoplita", "ticket": "Ticket de Armas de Apoio", "ticketQtd": 1, "categoria": "Equipamentos", "subcategoria": "Apoio", "classes": ["Guardião Real"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Arma de Apoio - Báculo de Apoio Místico", "ticket": "Ticket de Armas de Apoio", "ticketQtd": 1, "categoria": "Equipamentos", "subcategoria": "Apoio", "classes": ["Arcano"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Arma de Apoio - Livro de Apoio Mágico", "ticket": "Ticket de Armas de Apoio", "ticketQtd": 1, "categoria": "Equipamentos", "subcategoria": "Apoio", "classes": ["Feiticeiro"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Arma de Apoio - Arco de Apoio de Elite", "ticket": "Ticket de Armas de Apoio", "ticketQtd": 1, "categoria": "Equipamentos", "subcategoria": "Apoio", "classes": ["Sentinela"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+        {"nome": "Arma de Apoio - Violino de Apoio Musical", "ticket": "Ticket de Armas de Apoio", "ticketQtd": 1, "categoria": "Equipamentos", "subcategoria": "Apoio", "classes": ["Menestrel", "Trovador", "Animador", "Musa", "Cigana"], "npc": {"nome": "Zento", "local": "Prontera (166,300)"}},
+
+        {"nome": "Refinador Ilusión +10", "custo": 20, "categoria": "Refino", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Colete Ilusión A", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Colete Ilusión B", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Motor Ilusión A", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Motor Ilusión B", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Perna Ilusión A", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Perna Ilusión B", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Turbina Ilusión A", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Turbina Ilusión B", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Soquete Ilusión A", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Soquete Ilusión B", "custo": 10, "categoria": "Ilusão", "subcategoria": "Ilusão", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+
+        {"nome": "Módulo N-Normal", "custo": 10, "categoria": "Encantamentos", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Módulo S-Singular", "custo": 30, "categoria": "Encantamentos", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}},
+        {"nome": "Módulo U-Único", "custo": 50, "categoria": "Encantamentos", "npc": {"nome": "RS26-1", "local": "Prontera / sp_cor (98,136)"}}
+      ],
+      "itensFarmados": [
+        {"nome": "Caixa Evolutiva", "quantidade": 0},
+        {"nome": "Ticket de Arma Metálica", "quantidade": 0},
+        {"nome": "Ticket de Armadura Apoio", "quantidade": 0}
+      ]
+    }
+  ]
+}

@@ -26,26 +26,35 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- Tabs de Navegação -->
-        <div class="flex overflow-x-auto border-b border-slate-200 mb-6 bg-white rounded-t-lg shadow-sm px-4 pt-4">
-            <button onclick="mudarAba('contas')" id="tab-contas" class="tab-active py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2">
-                <i class="fa-solid fa-users"></i> Contas e Personagens
+        <!-- Áreas Principais -->
+        <div class="flex overflow-x-auto border-b border-slate-200 mb-2 bg-white rounded-t-lg shadow-sm px-4 pt-4">
+            <button onclick="mudarArea('contas')" id="tab-area-contas" class="tab-active py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2">
+                <i class="fa-solid fa-user"></i> Contas e Personagens
             </button>
-            <button onclick="mudarAba('grupos')" id="tab-grupos" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
-                <i class="fa-solid fa-layer-group"></i> Montar Grupos
+            <button onclick="mudarArea('desbravadores')" id="tab-area-desbravadores" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
+                <i class="fa-solid fa-users"></i> Desbravadores
             </button>
-            <button onclick="mudarAba('farm')" id="tab-farm" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
-                <i class="fa-solid fa-coins"></i> Registrar Farm
+            <button onclick="mudarArea('eventos')" id="tab-area-eventos" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
+                <i class="fa-solid fa-calendar-star"></i> Eventos
             </button>
-            <button onclick="mudarAba('loja')" id="tab-loja" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
-                <i class="fa-solid fa-store"></i> Loja da Liga
-            </button>
-            <button onclick="mudarAba('dados')" id="tab-dados" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
+            <button onclick="mudarArea('dados')" id="tab-area-dados" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
                 <i class="fa-solid fa-database"></i> Dados/Exportar
             </button>
         </div>
 
-        <div id="aba-contas" class="aba-conteudo block">
+        <div id="subnav-desbravadores" class="subnav hidden flex overflow-x-auto border-b border-slate-200 mb-6 bg-white rounded-t-lg shadow-sm px-4 pt-4">
+            <button onclick="mudarSubAba('grupos')" id="tab-sub-grupos" class="tab-active py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2">
+                <i class="fa-solid fa-layer-group"></i> Montar Grupos
+            </button>
+            <button onclick="mudarSubAba('farm')" id="tab-sub-farm" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
+                <i class="fa-solid fa-coins"></i> Registrar Farm
+            </button>
+            <button onclick="mudarSubAba('loja')" id="tab-sub-loja" class="text-slate-500 py-2 px-4 whitespace-nowrap focus:outline-none flex items-center gap-2 hover:text-indigo-600">
+                <i class="fa-solid fa-store"></i> Loja da Liga
+            </button>
+        </div>
+
+        <div id="area-contas" class="area-conteudo block">
             <!-- Nova Barra de Servidor (Criar Conta) -->
             <div class="mb-6 bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
@@ -72,8 +81,8 @@
                 </div>
             </div>
         </div>
-
-        <div id="aba-grupos" class="aba-conteudo hidden">
+        <div id="area-desbravadores" class="area-conteudo hidden">
+            <div id="subaba-grupos" class="subaba-conteudo hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6">
                 <h2 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2 flex items-center gap-2"><i class="fa-solid fa-cogs text-indigo-500"></i> Configuração da Instância</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -81,7 +90,7 @@
                         <label class="block text-sm font-medium text-slate-700 mb-1">Selecione a Instância</label>
                         <select id="select-instancia" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
                             <optgroup label="Iniciais e Especiais">
-                                <option value="Vila dos Porings|30|99|5">Vila dos Porings (Nv 30 a 99) - 5 Moedas</option>
+                                <option value="Vila dos Porings|30|60|5">Vila dos Porings (Nv 30 a 60) - 5 Moedas</option>
                                 <option value="Torre Sem Fim|50|250|20">Torre Sem Fim (Nv 50+) - 20 Moedas</option>
                                 <option value="Santuário Selado|75|250|15">Santuário Selado (Nv 75+) - 15 Moedas</option>
                             </optgroup>
@@ -142,9 +151,41 @@
                     <p class="text-slate-500">Selecione a instância e clique em Gerar Grupos.</p>
                 </div>
             </div>
+            </div>
         </div>
 
-        <div id="aba-farm" class="aba-conteudo hidden">
+        <!-- Área de Eventos -->
+        <div id="area-eventos" class="area-conteudo hidden">
+            <div class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-6">
+                <div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-4">
+                        <h2 class="text-lg font-bold text-slate-700 mb-4 border-b pb-2 flex items-center gap-2"><i class="fa-solid fa-calendar-star text-indigo-500"></i> Eventos Ativos</h2>
+                        <div id="lista-eventos-externos" class="space-y-4">
+                            <div class="text-center p-8 bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg">
+                                <i class="fa-solid fa-file-import text-4xl text-slate-300 mb-3"></i>
+                                <p class="text-slate-500 font-medium">Nenhum evento disponível no arquivo.</p>
+                                <p class="text-xs text-slate-400 mt-1">Adicione eventos em <code>eventos.json</code> na raiz do projeto.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
+                            <div>
+                                <h2 id="evento-selecionado-title" class="text-xl font-bold text-slate-800">Selecione um evento</h2>
+                                <p id="evento-selecionado-subtitle" class="text-sm text-slate-500 mt-1">Clique em um evento à esquerda para ver detalhes e registrar farm.</p>
+                            </div>
+                            <div id="evento-selecionado-status" class="rounded-full px-3 py-1 text-sm font-semibold bg-slate-100 text-slate-700"></div>
+                        </div>
+                        <div id="tabs-evento" class="flex flex-wrap gap-2 border-b border-slate-200 pb-3 mb-4"></div>
+                        <div id="evento-detalhe-conteudo" class="space-y-5"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="subaba-farm" class="subaba-conteudo hidden">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Registro por Grupo -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
@@ -212,7 +253,7 @@
             </div>
         </div>
 
-        <div id="aba-loja" class="aba-conteudo hidden">
+        <div id="subaba-loja" class="subaba-conteudo hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6 flex items-center justify-between gap-4">
                 <div class="w-full md:w-1/2">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Selecione a Conta para simular resgates:</label>
@@ -260,7 +301,7 @@
             </div>
         </div>
 
-        <div id="aba-dados" class="aba-conteudo hidden">
+        <div id="area-dados" class="area-conteudo hidden">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-6">
                 <h2 class="text-lg font-bold text-slate-700 mb-2 flex items-center gap-2"><i class="fa-solid fa-mobile-screen-button text-indigo-500"></i> Sincronizar com Celular / Backup</h2>
                 <p class="text-sm text-slate-500 mb-4">Copie o código abaixo, envie para si mesmo (ex: WhatsApp) e cole no aplicativo no celular clicando em "Importar Dados".</p>
@@ -428,6 +469,12 @@
                             <input type="number" id="novo-char-job" min="1" max="80" value="1" onkeydown="if(event.key === 'Enter') confirmarAdicionarPersonagem()" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700 text-center bg-white">
                         </div>
                     </div>
+                    <div class="flex items-center gap-3">
+                        <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                            <input type="checkbox" id="novo-char-booster" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            Personagem Booster
+                        </label>
+                    </div>
 
                     <button onclick="confirmarAdicionarPersonagem()" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md flex items-center justify-center gap-2">
                         <i class="fa-solid fa-check"></i> Finalizar Criação
@@ -487,6 +534,12 @@
                             <button onclick="alterarJobEdit(1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded font-bold transition-colors">+</button>
                         </div>
                     </div>
+                </div>
+                <div class="mt-4">
+                    <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                        <input type="checkbox" id="edit-char-booster" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        Personagem do Evento Booster
+                    </label>
                 </div>
             </div>
             
