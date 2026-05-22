@@ -17,6 +17,72 @@ function mostrarToast(mensagem, tipo = 'success') {
     }, 3000);
 }
 
+function mostrarToastConfirmacao(mensagem, onConfirm, onCancel = null, tipo = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+
+    let bgClass = tipo === 'success' ? 'bg-green-600' : (tipo === 'error' ? 'bg-red-600' : 'bg-blue-600');
+    let iconClass = tipo === 'success' ? 'fa-check-circle' : (tipo === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+
+    toast.className = `${bgClass} text-white px-4 py-3 rounded shadow-lg toast-enter text-sm font-medium min-w-[280px]`;
+    toast.innerHTML = `
+        <div class="flex-1 flex items-start gap-3">
+            <i class="fa-solid ${iconClass} text-lg mt-0.5"></i>
+            <span class="leading-snug">${mensagem}</span>
+        </div>
+        <div class="flex items-center gap-2 ml-4 mt-3 sm:mt-0 sm:ml-0">
+            <button class="px-3 py-1 rounded bg-white text-slate-900 font-semibold hover:bg-slate-100 confirm-toast-yes">Confirmar</button>
+            <button class="px-3 py-1 rounded border border-white text-white hover:bg-white/10 confirm-toast-no">Cancelar</button>
+        </div>
+    `;
+
+    container.appendChild(toast);
+
+    const removeToast = () => {
+        if (!toast) return;
+        toast.classList.replace('toast-enter', 'toast-leave');
+        setTimeout(() => toast.remove(), 300);
+    };
+
+    toast.querySelector('.confirm-toast-yes').onclick = () => {
+        onConfirm();
+        removeToast();
+    };
+    toast.querySelector('.confirm-toast-no').onclick = () => {
+        if (onCancel) onCancel();
+        removeToast();
+    };
+
+    setTimeout(removeToast, 15000);
+}
+
+function copiarParaClipboard(texto, info = 'Comando copiado!') {
+    const fallbackCopy = () => {
+        const textarea = document.createElement('textarea');
+        textarea.value = texto;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            mostrarToast(`${info} ${texto}`);
+        } catch (err) {
+            mostrarToast('Não foi possível copiar para a área de transferência.', 'error');
+        }
+        document.body.removeChild(textarea);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(
+            () => mostrarToast(`${info} ${texto}`),
+            () => fallbackCopy()
+        );
+    } else {
+        fallbackCopy();
+    }
+}
+
 // --- ESTADO DA APLICAÇÃO ---
 let appState = {
     contas: [], // { email: 'x', moedas: 0, personagens: [ { id, nome, classe, level, genero } ] }
@@ -218,6 +284,7 @@ const mapearClasseParaArquivo = {
     'Sicário': 'sicarios',
     'Ninja': 'ninja',
     'Justiceiro': 'justiceiro',
+    'Bruxo': 'bruxo',
     'Invocador (Físico)': 'invocador',
     'Invocador (Mágico)': 'invocador'
 };
@@ -249,6 +316,7 @@ const mapearClasseParaEmblema = {
     'Sicário': 'sicario',
     'Ninja': 'ninjas',
     'Justiceiro': 'justiceiros',
+    'Bruxo': 'bruxo',
     'Invocador (Físico)': 'invocadores',
     'Invocador (Mágico)': 'invocadores'
 };
@@ -1183,12 +1251,21 @@ function adicionarEvento() {
 
 function removerEvento(eventoId) {
     const even = appState.eventos.find(e => e.id === eventoId);
-    if(even && confirm(`Tem certeza que deseja remover o evento "${even.nome}"?`)) {
-        appState.eventos = appState.eventos.filter(e => e.id !== eventoId);
-        salvarDados();
-        renderizarEventos();
-        mostrarToast(`Evento "${even.nome}" removido.`);
-    }
+    if(!even) return;
+
+    mostrarToastConfirmacao(
+        `Tem certeza que deseja remover o evento "${even.nome}"?`,
+        () => {
+            appState.eventos = appState.eventos.filter(e => e.id !== eventoId);
+            salvarDados();
+            renderizarEventos();
+            mostrarToast(`Evento "${even.nome}" removido.`);
+        },
+        () => {
+            mostrarToast('Remoção cancelada.', 'info');
+        },
+        'error'
+    );
 }
 
 function carregarEventosExternos() {
@@ -1245,6 +1322,21 @@ function getEventoAtivo(eventoId) {
         ...modelo,
         personagensEvento: { ...registro.personagensEvento }
     };
+}
+
+function eventoUsaSaldoConta(evento) {
+    return evento?.saldoPorConta === true;
+}
+
+function personagemElegivelParaEvento(personagem, evento) {
+    if(!evento) return true;
+    if(eventoUsaSaldoConta(evento)) {
+        if(evento.id === 'gatchaman') {
+            return personagem.level >= 100;
+        }
+    }
+    if(evento.booster) return personagem.boosterEvento;
+    return true;
 }
 
 function renderizarEventosExternos() {
@@ -1373,7 +1465,8 @@ function renderizarConteudoAbaEvento(evento) {
     if(!container) return;
 
     const isBoosterEvento = !!evento.booster;
-    const personagens = appState.contas.flatMap(conta => conta.personagens.map(p => ({ ...p, contaEmail: conta.email }))).filter(p => !isBoosterEvento || p.boosterEvento);
+    const isContaSaldoEvento = eventoUsaSaldoConta(evento);
+    const personagens = appState.contas.flatMap(conta => conta.personagens.map(p => ({ ...p, contaEmail: conta.email }))).filter(p => personagemElegivelParaEvento(p, evento));
     const totalRegistrado = Object.values(evento.personagensEvento || {}).reduce((acc, qtd) => acc + qtd, 0);
     const totalBoosters = isBoosterEvento ? personagens.length : 0;
     const contasBoosters = isBoosterEvento ? [...new Set(personagens.map(p => p.contaEmail))].length : 0;
@@ -1476,17 +1569,30 @@ function renderizarConteudoAbaEvento(evento) {
             return;
         }
 
-        const currentSelectedChar = (window._lojaSelected && window._lojaSelected[evento.id]) || document.getElementById(`loja-char-${evento.id}`)?.value || '';
-        const selectOpcoes = personagens.map(personagem => `<option value="${personagem.id}"${currentSelectedChar === personagem.id ? ' selected' : ''}>${personagem.nome} (${personagem.classe})</option>`).join('');
+        const currentSelectedAccount = (window._lojaSelected && window._lojaSelected[evento.id]) || document.getElementById(`farm-account-${evento.id}`)?.value || '';
+        const selectOpcoes = appState.contas.map(conta => {
+            const eligibleCount = conta.personagens.filter(p => personagemElegivelParaEvento(p, evento)).length;
+            return `<option value="${conta.email}"${currentSelectedAccount === conta.email ? ' selected' : ''}>${conta.email} (${eligibleCount} personagem${eligibleCount === 1 ? '' : 's'})</option>`;
+        }).join('');
+
+        const selectedAccount = appState.contas.find(c => c.email === currentSelectedAccount);
+        const accountCharsHtml = selectedAccount
+            ? selectedAccount.personagens.filter(p => personagemElegivelParaEvento(p, evento)).map(p => `<div class="text-sm text-slate-600">• ${p.nome} (${p.classe}) Nv ${p.level}</div>`).join('')
+            : '<div class="text-sm text-slate-500">Selecione uma conta para ver os personagens elegíveis.</div>';
 
         // Lista de quests com checkbox e campo para moedas vindas da caixa
         const questsListHtml = (evento.quests || []).map((q, idx) => {
+            const localTags = q.localizacoes ? q.localizacoes.map(loc => `
+                        <button type="button" onclick="copiarParaClipboard('${loc.nav}', 'Comando /nav copiado')" class="mt-2 inline-flex items-center rounded-full border border-slate-300 bg-slate-100 text-slate-700 px-2 py-1 text-[11px] font-semibold hover:bg-slate-200 transition-all">${loc.label}</button>
+                    `).join('') : '';
             return `
                 <label class="flex items-start gap-3 bg-white p-3 rounded border border-slate-200">
                     <input type="checkbox" id="quest-${evento.id}-${idx}" data-recompensa="${(q.recompensa||'').replace(/"/g,'')}">
                     <div>
                         <div class="font-medium text-slate-800">${q.titulo}</div>
-                        <div class="text-xs text-slate-500">${q.descricao || ''} <span class="font-semibold text-indigo-600">${q.recompensa || ''}</span></div>
+                        <div class="text-xs text-slate-500">${q.descricao || ''} <span class="font-semibold text-indigo-600">${q.recompensa || ''}</span>
+                            <div class="flex flex-wrap gap-2 mt-2">${localTags}</div>
+                        </div>
                     </div>
                 </label>`;
         }).join('');
@@ -1494,14 +1600,18 @@ function renderizarConteudoAbaEvento(evento) {
         container.innerHTML = `
             ${detalheBasico}
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Selecionar Personagem</label>
-                <select id="char-select-${evento.id}" class="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm mb-4">
-                    <option value="">Selecione um personagem...</option>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Selecionar Conta</label>
+                <select id="farm-account-${evento.id}" onchange="(window._lojaSelected=window._lojaSelected||{}),(window._lojaSelected['${evento.id}']=this.value),renderizarEventoDetalhe()" class="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm mb-4">
+                    <option value="">Selecione uma conta...</option>
                     ${selectOpcoes}
                 </select>
+                <div class="mb-3 p-3 rounded-xl bg-white border border-slate-200">
+                    <div class="text-sm font-semibold text-slate-700 mb-2">Personagens elegíveis desta conta</div>
+                    <div class="space-y-1">${accountCharsHtml}</div>
+                </div>
 
                 <div class="mb-3">
-                    <p class="text-sm font-semibold text-slate-700 mb-2">Quests realizadas (marque as que o personagem completou)</p>
+                    <p class="text-sm font-semibold text-slate-700 mb-2">Quests realizadas (marque as que a conta completou)</p>
                     <div class="grid gap-2">${questsListHtml}</div>
                 </div>
 
@@ -1510,10 +1620,10 @@ function renderizarConteudoAbaEvento(evento) {
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Moedas recebidas da Caixa de Apoio</label>
                         <input id="caixa-coins-${evento.id}" type="number" min="0" value="0" class="w-full p-3 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
                     </div>
-                    <button onclick="registrarFarmRapido('${evento.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 text-sm font-semibold">Adicionar ao personagem</button>
+                    <button onclick="registrarFarmRapido('${evento.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 text-sm font-semibold">Adicionar ao evento</button>
                 </div>
 
-                <p class="text-xs text-slate-500">Marque as quests concluídas e/ou informe as moedas recebidas ao abrir a caixa. O total será somado ao personagem selecionado.</p>
+                <p class="text-xs text-slate-500">Marque as quests concluídas e/ou informe as moedas recebidas ao abrir a caixa. O total será somado à conta selecionada.</p>
             </div>
         `;
         return;
@@ -1548,6 +1658,7 @@ function renderizarConteudoAbaEvento(evento) {
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <h4 class="font-bold text-slate-800">${quest.titulo}</h4>
                 <p class="text-sm text-slate-600 mt-2">${quest.descricao || 'Sem descrição'}</p>
+                ${quest.localizacoes ? `<div class="mt-3 text-xs text-slate-500 font-semibold">Locais possíveis:</div><div class="flex flex-wrap gap-2 mt-2">${quest.localizacoes.map(loc => `<button type="button" onclick="copiarParaClipboard('${loc.nav}', 'Comando /nav copiado')" class="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 text-slate-700 px-2 py-1 text-[11px] font-semibold hover:bg-slate-200 transition-all">${loc.label}</button>`).join('')}</div>` : ''}
                 <p class="text-sm text-indigo-600 font-semibold mt-3">Recompensa: ${quest.recompensa || 'Não informada'}</p>
             </div>
         `).join('');
@@ -1561,9 +1672,14 @@ function renderizarConteudoAbaEvento(evento) {
             container.innerHTML = `<div class="text-center p-10 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-slate-500">Nenhum item de loja disponível para este evento.</div>`;
             return;
         }
-        // filtro por nome/NPC + filtro por categoria + seleção de personagem
-        const currentSelectedChar = (window._lojaSelected && window._lojaSelected[evento.id]) || document.getElementById(`loja-char-${evento.id}`)?.value || '';
-        const selectOpcoes = personagens.map(personagem => `<option value="${personagem.id}"${currentSelectedChar === personagem.id ? ' selected' : ''}>${personagem.nome} (${personagem.classe})</option>`).join('');
+        const isContaSaldoEvento = eventoUsaSaldoConta(evento);
+        const currentSelectedLoja = (window._lojaSelected && window._lojaSelected[evento.id]) || (isContaSaldoEvento ? document.getElementById(`loja-account-${evento.id}`)?.value : document.getElementById(`loja-char-${evento.id}`)?.value) || '';
+        const selectOpcoes = isContaSaldoEvento
+            ? appState.contas.map(conta => {
+                const eligibleCount = conta.personagens.filter(p => personagemElegivelParaEvento(p, evento)).length;
+                return `<option value="${conta.email}"${currentSelectedLoja === conta.email ? ' selected' : ''}>${conta.email} (${eligibleCount} personagem${eligibleCount === 1 ? '' : 's'})</option>`;
+            }).join('')
+            : personagens.map(personagem => `<option value="${personagem.id}"${currentSelectedLoja === personagem.id ? ' selected' : ''}>${personagem.nome} (${personagem.classe})</option>`).join('');
 
         const filterValue = (document.getElementById(`loja-filter-${evento.id}`)?.value || '').toLowerCase();
         const categoriaFiltro = (document.getElementById(`loja-categoria-${evento.id}`)?.value || '');
@@ -1596,7 +1712,14 @@ function renderizarConteudoAbaEvento(evento) {
         </div>`;
 
         // Select de personagem (usado para compras) — mantém sincronização com window._lojaSelected
-        const selectHtml = `
+        const selectHtml = isContaSaldoEvento ? `
+            <div class="mb-3">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Selecionar Conta</label>
+                <select id="loja-account-${evento.id}" onchange="(window._lojaSelected=window._lojaSelected||{}),(window._lojaSelected['${evento.id}']=this.value),renderizarEventoDetalhe()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white">
+                    <option value=''>Selecione uma conta...</option>
+                    ${selectOpcoes}
+                </select>
+            </div>` : `
             <div class="mb-3">
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Selecionar Personagem</label>
                 <select id="loja-char-${evento.id}" onchange="(window._lojaSelected=window._lojaSelected||{}),(window._lojaSelected['${evento.id}']=this.value),renderizarEventoDetalhe()" class="w-full p-2 border border-slate-300 rounded text-sm bg-white">
@@ -1606,32 +1729,57 @@ function renderizarConteudoAbaEvento(evento) {
             </div>`;
 
         // Render no estilo da loja dos Desbravadores (cards em grid)
-        const selectedCharId = currentSelectedChar || '';
-        // buscar registro local do evento para saldo por personagem
+        const selectedTarget = currentSelectedLoja || '';
+        // buscar registro local do evento para saldo por personagem/conta
         const registroLocal = appState.eventos.find(e => e.id === evento.id) || { personagensEvento: {} };
 
-        // Card do personagem selecionado (exibido acima dos filtros)
-        const selectedCharObj = currentSelectedChar ? encontrarPersonagem(currentSelectedChar) : null;
+        // Card do personagem ou conta selecionada (exibido acima dos filtros)
         let selectedCardHtml = '';
-        if(selectedCharObj) {
-            const gen = selectedCharObj.genero || 'M';
-            const spriteCandidates = gerarCandidatosImagemClasse(selectedCharObj.classe, gen);
-            const spriteFirst = spriteCandidates[0] || obterImagemClasse(selectedCharObj.classe, gen);
-            const fallbackLarge = obterFallbackImagemClasse(selectedCharObj.classe, gen);
-            selectedCardHtml = `
-            <div class="mb-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-                <div class="w-20 h-20 flex items-center justify-center bg-transparent">
-                    <img src="${spriteFirst}" data-fallback="${fallbackLarge}" class="max-w-full max-h-full object-contain bg-transparent drop-shadow-md" onerror="handleImgError(this)">
-                </div>
-                <div class="flex-1">
-                    <div class="font-bold text-slate-800">${selectedCharObj.nome}</div>
-                    <div class="text-sm text-slate-500">${selectedCharObj.classe}</div>
-                    <div class="text-sm mt-1">Saldo: <span class="font-bold text-indigo-600">${registroLocal.personagensEvento[currentSelectedChar] || 0} ${getEventoMoeda(evento)}</span></div>
-                </div>
-                <div class="flex flex-col gap-2 items-end">
-                    <button onclick="(window._lojaSelected=window._lojaSelected||{}),(window._lojaSelected['${evento.id}']=''),renderizarEventoDetalhe()" class="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 text-sm">Limpar</button>
-                </div>
-            </div>`;
+        if(isContaSaldoEvento) {
+            const selectedConta = appState.contas.find(c => c.email === selectedTarget);
+            const saldoConta = selectedTarget ? (registroLocal.personagensEvento[selectedTarget] || 0) : 0;
+            if(selectedConta) {
+                const eligibleChars = selectedConta.personagens.filter(p => personagemElegivelParaEvento(p, evento));
+                const eligibleHtml = eligibleChars.length > 0
+                    ? eligibleChars.map(p => `<div class="text-sm text-slate-600">• ${p.nome} (${p.classe}) Nv ${p.level}</div>`).join('')
+                    : `<div class="text-sm text-slate-500">Nenhum personagem elegível nesta conta.</div>`;
+                selectedCardHtml = `
+                <div class="mb-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between gap-4 mb-3">
+                        <div>
+                            <div class="font-bold text-slate-800">Conta: ${selectedConta.email}</div>
+                            <div class="text-sm text-slate-500">Saldo disponível: <span class="font-semibold text-indigo-600">${saldoConta} ${getEventoMoeda(evento)}</span></div>
+                        </div>
+                        <button onclick="(window._lojaSelected=window._lojaSelected||{}),(window._lojaSelected['${evento.id}']=''),renderizarEventoDetalhe()" class="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 text-sm">Limpar</button>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="text-sm font-semibold text-slate-700 mb-2">Personagens elegíveis</div>
+                        ${eligibleHtml}
+                    </div>
+                </div>`;
+            }
+        } else {
+            const selectedCharObj = selectedTarget ? encontrarPersonagem(selectedTarget) : null;
+            if(selectedCharObj) {
+                const gen = selectedCharObj.genero || 'M';
+                const spriteCandidates = gerarCandidatosImagemClasse(selectedCharObj.classe, gen);
+                const spriteFirst = spriteCandidates[0] || obterImagemClasse(selectedCharObj.classe, gen);
+                const fallbackLarge = obterFallbackImagemClasse(selectedCharObj.classe, gen);
+                selectedCardHtml = `
+                <div class="mb-4 p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-20 h-20 flex items-center justify-center bg-transparent">
+                        <img src="${spriteFirst}" data-fallback="${fallbackLarge}" class="max-w-full max-h-full object-contain bg-transparent drop-shadow-md" onerror="handleImgError(this)">
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-slate-800">${selectedCharObj.nome}</div>
+                        <div class="text-sm text-slate-500">${selectedCharObj.classe}</div>
+                        <div class="text-sm mt-1">Saldo: <span class="font-bold text-indigo-600">${registroLocal.personagensEvento[selectedTarget] || 0} ${getEventoMoeda(evento)}</span></div>
+                    </div>
+                    <div class="flex flex-col gap-2 items-end">
+                        <button onclick="(window._lojaSelected=window._lojaSelected||{}),(window._lojaSelected['${evento.id}']=''),renderizarEventoDetalhe()" class="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 text-sm">Limpar</button>
+                    </div>
+                </div>`;
+            }
         }
 
         const filteredItems = evento.loja.map((item, idx) => {
@@ -1673,24 +1821,27 @@ function renderizarConteudoAbaEvento(evento) {
             }
             if(item.slot) costLabel += ` — ${item.slot}`;
 
-            const saldoChar = selectedCharId ? (registroLocal.personagensEvento[selectedCharId] || 0) : 0;
-            const qtdPossivel = effectiveCoinCost > 0 ? Math.floor(saldoChar / effectiveCoinCost) : 0;
-            const podeComprar = selectedCharId && qtdPossivel > 0;
+            const saldoTarget = selectedTarget ? (registroLocal.personagensEvento[selectedTarget] || 0) : 0;
+            const qtdPossivel = effectiveCoinCost > 0 ? Math.floor(saldoTarget / effectiveCoinCost) : 0;
+            const podeComprar = selectedTarget && qtdPossivel > 0;
             const corBorda = podeComprar ? 'border-green-300 bg-green-50 hover:bg-green-100 hover:border-green-400 cursor-pointer shadow-sm hover:shadow-md transition-all' : 'border-slate-200 bg-slate-100 opacity-95';
 
-            // class-specific visibility: if item.classes defined, require selected character to match
+            // class-specific visibility: if item.classes defined, require selected character or selected account to have a matching classe
             if(item.classes && item.classes.length > 0) {
-                if(!selectedCharId) return '';
-                const selectedChar = encontrarPersonagem(selectedCharId);
-                if(!selectedChar) return '';
-                const nomeClasse = selectedChar.classe || '';
-                if(!item.classes.includes(nomeClasse)) return '';
+                if(!selectedTarget) return '';
+                const hasMatchingChar = isContaSaldoEvento
+                    ? (appState.contas.find(c => c.email === selectedTarget)?.personagens || []).some(p => item.classes.includes(p.classe))
+                    : (() => {
+                        const selectedChar = encontrarPersonagem(selectedTarget);
+                        return selectedChar ? item.classes.includes(selectedChar.classe || '') : false;
+                    })();
+                if(!hasMatchingChar) return '';
             }
 
             return `
                 <div class="border-2 ${corBorda} p-4 mt-2 rounded-xl text-center flex flex-col justify-between relative group">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm bg-slate-200 text-slate-700 border border-white whitespace-nowrap">
-                        ${npc ? `<i class="fa-solid fa-user-tie mr-1"></i> ${item.npc.nome}` : 'Evento'}
+                        ${npc ? `<button type="button" onclick="copiarParaClipboard('${item.npc.nav || ''}', 'Comando /nav copiado')" class="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:text-slate-900 ${item.npc.nav ? 'cursor-pointer' : ''}"><i class="fa-solid fa-user-tie"></i> ${item.npc.nome}</button>` : 'Evento'}
                     </div>
                     <div class="mb-3 mt-2">
                         <span class="block text-sm font-bold text-slate-700">${nome}</span>
@@ -1701,9 +1852,9 @@ function renderizarConteudoAbaEvento(evento) {
                         ${podeComprar ? 
                             `<button onclick="comprarItem('${evento.id}', ${idx})" class="w-full bg-green-500 group-hover:bg-green-600 text-white text-sm font-bold py-2 px-3 rounded shadow transition-colors flex items-center justify-center gap-2"><i class="fa-solid fa-bag-shopping"></i> Comprar</button>`
                             :
-                            `<div class="w-full bg-slate-300 text-slate-500 text-sm font-bold py-2 px-3 rounded flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> ${selectedCharId ? 'Saldo insuficiente' : 'Selecione Personagem'}</div>`
+                            `<div class="w-full bg-slate-300 text-slate-500 text-sm font-bold py-2 px-3 rounded flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> ${selectedTarget ? 'Saldo insuficiente' : (isContaSaldoEvento ? 'Selecione uma conta' : 'Selecione um personagem')}</div>`
                         }
-                        <div class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-wider">Limite: ${selectedCharId ? qtdPossivel : 0} un.</div>
+                        <div class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-wider">Limite: ${selectedTarget ? qtdPossivel : 0} un.</div>
                     </div>
                 </div>`;
         });
@@ -1753,19 +1904,35 @@ function renderizarEventosLocais() {
         const personagensComSaldo = Object.entries(evento.personagensEvento || {}).filter(([id,q]) => q > 0).length;
 
         let pessoasHtml = '';
-        for(const [charId, qtd] of Object.entries(evento.personagensEvento)) {
-            const char = encontrarPersonagem(charId);
-            if(char) {
-                pessoasHtml += `
-                    <div class="flex justify-between items-center bg-slate-100 p-2 rounded text-sm">
-                        <span class="font-medium">${char.nome}</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-indigo-600 font-bold">${qtd}</span>
-                            <button onclick="ajustarFarmEvento('${evento.id}', '${charId}', -1)" class="text-red-600 hover:text-red-700 font-bold text-lg leading-none">−</button>
-                            <button onclick="ajustarFarmEvento('${evento.id}', '${charId}', 1)" class="text-green-600 hover:text-green-700 font-bold text-lg leading-none">+</button>
-                            <button onclick="removerFarmEvento('${evento.id}', '${charId}')" class="text-slate-400 hover:text-red-600" title="Remover"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
-                    </div>`;
+        for(const [key, qtd] of Object.entries(evento.personagensEvento)) {
+            if(evento.saldoPorConta) {
+                const conta = appState.contas.find(c => c.email === key);
+                if(conta) {
+                    pessoasHtml += `
+                        <div class="flex justify-between items-center bg-slate-100 p-2 rounded text-sm">
+                            <span class="font-medium">Conta: ${conta.email}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-indigo-600 font-bold">${qtd}</span>
+                                <button onclick="ajustarFarmEvento('${evento.id}', '${key}', -1)" class="text-red-600 hover:text-red-700 font-bold text-lg leading-none">−</button>
+                                <button onclick="ajustarFarmEvento('${evento.id}', '${key}', 1)" class="text-green-600 hover:text-green-700 font-bold text-lg leading-none">+</button>
+                                <button onclick="removerFarmEvento('${evento.id}', '${key}')" class="text-slate-400 hover:text-red-600" title="Remover"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
+                        </div>`;
+                }
+            } else {
+                const char = encontrarPersonagem(key);
+                if(char) {
+                    pessoasHtml += `
+                        <div class="flex justify-between items-center bg-slate-100 p-2 rounded text-sm">
+                            <span class="font-medium">${char.nome}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-indigo-600 font-bold">${qtd}</span>
+                                <button onclick="ajustarFarmEvento('${evento.id}', '${key}', -1)" class="text-red-600 hover:text-red-700 font-bold text-lg leading-none">−</button>
+                                <button onclick="ajustarFarmEvento('${evento.id}', '${key}', 1)" class="text-green-600 hover:text-green-700 font-bold text-lg leading-none">+</button>
+                                <button onclick="removerFarmEvento('${evento.id}', '${key}')" class="text-slate-400 hover:text-red-600" title="Remover"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
+                        </div>`;
+                }
             }
         }
 
@@ -1833,12 +2000,15 @@ function registrarFarmRapido(eventoId, charId = null) {
     const eventoModelo = getEventoAtivo(eventoId);
     if(!eventoModelo) return mostrarToast('Evento não encontrado.', 'error');
 
-    // If charId not provided (from farm panel), read selected char and selected quests + caixa coins
-    if(!charId) {
-        const select = document.getElementById(`char-select-${eventoId}`);
-        if(select) charId = select.value;
+    const isContaSaldoEvento = eventoUsaSaldoConta(eventoModelo);
+    let registroId = charId;
 
-        if(!charId) return mostrarToast('Selecione um personagem.', 'error');
+    if(!registroId) {
+        const selectId = isContaSaldoEvento ? `farm-account-${eventoId}` : `char-select-${eventoId}`;
+        const select = document.getElementById(selectId);
+        if(select) registroId = select.value;
+
+        if(!registroId) return mostrarToast(isContaSaldoEvento ? 'Selecione uma conta.' : 'Selecione um personagem.', 'error');
 
         // Sum coins from selected quests
         let totalFromQuests = 0;
@@ -1874,16 +2044,20 @@ function registrarFarmRapido(eventoId, charId = null) {
         registro.personagensEvento = {};
     }
 
-    if(!registro.personagensEvento[charId]) {
-        registro.personagensEvento[charId] = 0;
+    if(!registro.personagensEvento[registroId]) {
+        registro.personagensEvento[registroId] = 0;
     }
-    registro.personagensEvento[charId] += qtd;
+    registro.personagensEvento[registroId] += qtd;
 
     salvarDados();
-    // registrar no histórico da conta do personagem
+    // registrar no histórico da conta ou do personagem
     let contaEmail = null;
-    for(const c of appState.contas) {
-        if(c.personagens.some(p => p.id === charId)) { contaEmail = c.email; break; }
+    if(isContaSaldoEvento) {
+        contaEmail = registroId;
+    } else {
+        for(const c of appState.contas) {
+            if(c.personagens.some(p => p.id === registroId)) { contaEmail = c.email; break; }
+        }
     }
     if(contaEmail) registrarNoHistorico(contaEmail, `Recebido no evento: ${eventoModelo.nome} (+${qtd} ${getEventoMoeda(eventoModelo)})`, qtd);
     renderizarEventos();
@@ -1912,9 +2086,11 @@ function comprarItem(eventoId, itemIndex) {
     const eventoModelo = getEventoAtivo(eventoId);
     if(!eventoModelo) return mostrarToast('Evento não encontrado.', 'error');
 
-    const select = document.getElementById(`loja-char-${eventoId}`);
-    const charId = select ? select.value : null;
-    if(!charId) return mostrarToast('Selecione um personagem para comprar.', 'error');
+    const isContaSaldoEvento = eventoUsaSaldoConta(eventoModelo);
+    const selectId = isContaSaldoEvento ? `loja-account-${eventoId}` : `loja-char-${eventoId}`;
+    const select = document.getElementById(selectId);
+    const selectedId = select ? select.value : null;
+    if(!selectedId) return mostrarToast(isContaSaldoEvento ? 'Selecione uma conta para comprar.' : 'Selecione um personagem para comprar.', 'error');
 
     const item = eventoModelo.loja && eventoModelo.loja[itemIndex];
     if(!item) return mostrarToast('Item não encontrado.', 'error');
@@ -1931,33 +2107,45 @@ function comprarItem(eventoId, itemIndex) {
         custo = item.custo || 0;
     }
 
-    // localizar registro de evento local (moedas por personagem)
+    // localizar registro de evento local (moedas por personagem ou conta)
     let registro = appState.eventos.find(e => e.id === eventoId);
     if(!registro) {
-        return mostrarToast('Este personagem não possui moedas registradas para este evento.', 'error');
+        return mostrarToast(isContaSaldoEvento ? 'Esta conta não possui moedas registradas para este evento.' : 'Este personagem não possui moedas registradas para este evento.', 'error');
     }
     if(!registro.personagensEvento) registro.personagensEvento = {};
-    const saldo = registro.personagensEvento[charId] || 0;
+    const saldo = registro.personagensEvento[selectedId] || 0;
     if(saldo < custo) return mostrarToast('Saldo insuficiente para comprar este item.', 'error');
 
-    if(!confirm(`Confirmar compra de "${item.nome}" por ${custo} ${getEventoMoeda(eventoModelo)} para o personagem selecionado?`)) return;
+    mostrarToastConfirmacao(
+        `Confirmar compra de "${item.nome}" por ${custo} ${getEventoMoeda(eventoModelo)} para ${isContaSaldoEvento ? 'a conta selecionada' : 'o personagem selecionado'}?`,
+        () => {
+            registro.personagensEvento[selectedId] = saldo - custo;
+            if(registro.personagensEvento[selectedId] <= 0) delete registro.personagensEvento[selectedId];
 
-    registro.personagensEvento[charId] = saldo - custo;
-    if(registro.personagensEvento[charId] <= 0) delete registro.personagensEvento[charId];
+            // registrar no histórico da conta ou do personagem
+            let contaEmail = null;
+            let registroNome = '';
+            if(isContaSaldoEvento) {
+                contaEmail = selectedId;
+                registroNome = selectedId;
+            } else {
+                for(const c of appState.contas) {
+                    const encontrado = c.personagens.find(p => p.id === selectedId);
+                    if(encontrado) { contaEmail = c.email; registroNome = encontrado.nome; break; }
+                }
+            }
+            if(contaEmail) registrarNoHistorico(contaEmail, `Compra na loja do evento: ${item.nome} (${eventoModelo.nome}) — ${registroNome}`, -custo);
 
-    // registrar no historico da conta do personagem
-    let contaEmail = null;
-    let charNome = '';
-    for(const c of appState.contas) {
-        const encontrado = c.personagens.find(p => p.id === charId);
-        if(encontrado) { contaEmail = c.email; charNome = encontrado.nome; break; }
-    }
-    if(contaEmail) registrarNoHistorico(contaEmail, `Compra na loja do evento: ${item.nome} (${eventoModelo.nome}) — ${charNome}`, -custo);
-
-    salvarDados();
-    renderizarEventoDetalhe();
-    renderizarEventos();
-    mostrarToast(`Compra realizada: ${item.nome} (-${custo} ${getEventoMoeda(eventoModelo)})`);
+            salvarDados();
+            renderizarEventoDetalhe();
+            renderizarEventos();
+            mostrarToast(`Compra realizada: ${item.nome} (-${custo} ${getEventoMoeda(eventoModelo)})`);
+        },
+        () => {
+            mostrarToast('Compra cancelada.', 'info');
+        },
+        'info'
+    );
 }
 
 function parseReward(recompensaStr) {

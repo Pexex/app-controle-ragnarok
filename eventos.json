@@ -178,6 +178,162 @@
         {"nome": "Ticket de Arma Metálica", "quantidade": 0},
         {"nome": "Ticket de Armadura Apoio", "quantidade": 0}
       ]
+    },
+    {
+      "id": "gatchaman",
+      "nome": "Gatchaman",
+      "moeda": "Botão Míssil Midga",
+      "descricao": "Evento de colaboração com missions diárias de caça e resgates de itens especiais. Requisito: Nível 100+",
+      "dataFim": "2026-06-09",
+      "saldoPorConta": true,
+      "requisitos": [
+        "Nível de base: 100 ou superior",
+        "Converse com o Guia da Fenda Anômala em Morroc (196, 261)",
+        "Complete a instância de Gatchaman"
+      ],
+      "quests": [
+        {
+          "titulo": "Preparar Míssil Midga",
+          "descricao": "Coletar 10 Pólvora Midga",
+          "recompensa": "1 Botão Míssil Midga"
+        },
+        {
+          "titulo": "Vamos Destruí-los",
+          "descricao": "Caçar 10 Galaring no mapa moc_fild12",
+          "recompensa": "1 Botão Míssil Midga"
+        },
+        {
+          "titulo": "Não retorne à base",
+          "descricao": "Caçar 10 Lula-explosiva no mapa moc_fild12",
+          "recompensa": "1 Botão Míssil Midga"
+        },
+        {
+          "titulo": "Prepare-se",
+          "descricao": "Caçar 1 Galaring Bestial na instância de Gatchaman",
+          "recompensa": "2 Botão Míssil Midga"
+        },
+        {
+          "titulo": "Eu imploro",
+          "descricao": "Encontrar Joe em um local aleatório. Missão aleatória com múltiplas variações",
+          "recompensa": "1 Botão Míssil Midga",
+          "localizacoes": [
+            { "label": "Portão oeste 1", "nav": "/nav moc_pryd02 113 83" },
+            { "label": "Portão oeste 2", "nav": "/nav in_sphinx3 162 165" },
+            { "label": "Portão sul 1", "nav": "/nav moc_fild16 218 99" },
+            { "label": "Portão sul 2", "nav": "/nav cmd_fild04 78 80" }
+          ]
+        }
+      ],
+      "loja": [
+        {"nome": "Carta Ninja Team", "custo": 55, "categoria": "Cartografia", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}},
+        {"nome": "Carta Galactor", "custo": 55, "categoria": "Cartografia", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}},
+        {"nome": "Carta Míssil Ave", "custo": 55, "categoria": "Cartografia", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}},
+        {"nome": "(Visual) Science Ninja Honorário", "custo": 25, "categoria": "Visual", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}},
+        {"nome": "Pena Resistente", "custo": 3, "categoria": "Encantamentos", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}},
+        {"nome": "Pena Maciça", "custo": 3, "categoria": "Encantamentos", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}},
+        {"nome": "Pena Leve", "custo": 3, "categoria": "Encantamentos", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}},
+        {"nome": "Pena Glamurosa", "custo": 3, "categoria": "Encantamentos", "npc": {"nome": "Armazém", "local": "Fenda Anômala (morocc 23, 188)", "nav": "/nav morocc 23 188"}}
+      ],
+      "itensFarmados": [
+        {"nome": "Botão Míssil Midga", "quantidade": 0}
+      ]
+    },
+    {
+      "id": "feira_do_melao",
+      "nome": "Feira do Melão",
+      "moeda": "Meloeda",
+      "descricao": "Evento sazonal com troca de Melões e concurso de tamanho. Requisitos: Nv. 20+.",
+      "dataFim": "2026-05-26",
+      "requisitos": [
+        "Nível de base: 20 ou superior",
+        "Converse com Lavanda em Geffen (88, 35)"
+      ],
+      "quests": [
+        {
+          "titulo": "Coletar Melões Amarelos",
+          "descricao": "Converse com Lavanda em Geffen (88, 35) e entregue 10 Melões Amarelos.",
+          "recompensa": "5 Refrigerantes de Melão",
+          "localizacoes": [
+            {"label": "Lavanda", "nav": "/nav geffen 88 35"}
+          ]
+        },
+        {
+          "titulo": "Entrega da Caixa Geladinha",
+          "descricao": "Leve a Caixa Geladinha para Lírio em Hugel (218, 230).",
+          "recompensa": "5 Pão de Melão e 5 Sorvete de Melão",
+          "localizacoes": [
+            {"label": "Lírio", "nav": "/nav hugel 218 230"}
+          ]
+        },
+        {
+          "titulo": "Melões Sombrios",
+          "descricao": "Fale com Dália em Geffen (89, 33) e colete 10 Melão Sombrio.",
+          "recompensa": "5 Refrigerantes de Melão",
+          "localizacoes": [
+            {"label": "Dália", "nav": "/nav geffen 89 33"}
+          ]
+        },
+        {
+          "titulo": "Coleta de Pele",
+          "descricao": "Fale com Jasmin em Geffen (106, 63) e colete 30 Pele de Meloring.",
+          "recompensa": "1 (Visual) Melofone + 1 Sorvete de Melão",
+          "localizacoes": [
+            {"label": "Jasmin", "nav": "/nav geffen 106 63"}
+          ]
+        },
+        {
+          "titulo": "Troca de Refri",
+          "descricao": "Fale com Jasmin em Geffen (106, 63) e troque 10 Pele de Meloring.",
+          "recompensa": "1 Refrigerante de Melão",
+          "localizacoes": [
+            {"label": "Jasmin", "nav": "/nav geffen 106 63"}
+          ]
+        },
+        {
+          "titulo": "Concurso do Melão",
+          "descricao": "Fale com Papoula em Geffen (142, 40) com 1 Melão Suspeito.",
+          "recompensa": "1-4 Meloeda",
+          "localizacoes": [
+            {"label": "Papoula", "nav": "/nav geffen 142 40"}
+          ]
+        },
+        {
+          "titulo": "Troca do Melão Suspeito",
+          "descricao": "Troque 10 Melões Amarelos com Mirabilis em Geffen (149, 68).",
+          "recompensa": "1 Melão Suspeito",
+          "localizacoes": [
+            {"label": "Mirabilis", "nav": "/nav geffen 149 68"}
+          ]
+        }
+      ],
+      "loja": [
+        {"nome": "5 Melão Amarelo", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Suco de Melão", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Refrigerante de Melão", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Galho Seco", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Velha Caixa Azul", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Biscoito de Mel", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Emblema Oficial", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Sorvete de Melão", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Massa de Gergelim", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "3 (Evento) Poção Média de Vida", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "3 (Evento) Poção Menor de Vida", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "1 (Evento) Poção Ilimitada", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "1 (Evento) Bolinho Divino", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Fruto de Yggdrasil", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Velha Caixa Roxa", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "(Visual) Mini Melão", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "(Visual) Capacete de Melão", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "(Visual) Boina de Melão", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Kit de Domesticação", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Álbum Mágico de Cartas", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Velho Álbum de Cartas", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}},
+        {"nome": "Galho Sangrento", "custo": 1, "categoria": "Recompensas", "npc": {"nome": "Papoula", "local": "Geffen (142, 40)", "nav": "/nav geffen 142 40"}}
+      ],
+      "itensFarmados": [
+        {"nome": "Melão Amarelo", "quantidade": 0},
+        {"nome": "Meloeda", "quantidade": 0}
+      ]
     }
   ]
 }
