@@ -1,0 +1,14 @@
+Imagens referenciadas no HTML de index.html:
+
+1. Preview padrão (placeholder externa):
+- https://placehold.co/150x250/cbd5e1/475569?text=Selecione\nClasse
+
+2. Emblemas de classe (dinâmicos):
+- img/emblema_${fileName}.png
+
+3. Sprites de personagem (dinâmicos por gênero):
+- img/${fileName}_${gen.toLowerCase()}.png
+
+Observação:
+- ${fileName} é gerado por sanitizarNomeArquivo(classe)
+- ${gen.toLowerCase()} será "m" ou "f"
