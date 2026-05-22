@@ -156,8 +156,48 @@ function obterFallbackImagemClasse(classeName, genero = 'M') {
     return `https://placehold.co/150x250/${cores.bg}/${cores.text}?text=${text}`;
 }
 
+// Mapa de classes para nomes de arquivo de sprite corretos
+const mapearClasseParaArquivo = {
+    'Paladino': 'paladino',
+    'Arquimago': 'arquimago_cl_4',
+    'Professor': 'professor',
+    'Atirador de Elite': 'atiradores_de_elite',
+    'Menestrel': 'menestrel',
+    'Cigana': 'cigana',
+    'Sumo Sacerdote': 'sumo_sacerdote',
+    'Mestre': 'mestre',
+    'Mestre-Ferreiro': 'ferreiro',
+    'Criador': 'criador',
+    'Algoz': 'algoz_das_sombras',
+    'Desordeiro': 'desordeiro',
+    'Oboro': 'oboro',
+    'Lorde': 'lorde'
+};
+
+// Mapa de classes para nomes de arquivo de emblema (alguns diferem do sprite)
+const mapearClasseParaEmblema = {
+    'Paladino': 'paladinos',
+    'Arquimago': 'arquimago_cl_4',
+    'Professor': 'professores',
+    'Atirador de Elite': 'atiradores_de_elite',
+    'Menestrel': 'menestréis',
+    'Cigana': 'ciganas',
+    'Sumo Sacerdote': 'sumo_sacerdotes',
+    'Mestre': 'mestres',
+    'Mestre-Ferreiro': 'mestres_ferreiros',
+    'Criador': 'criadores',
+    'Algoz': 'algoz_das_sombras',
+    'Desordeiro': 'desordeiros',
+    'Oboro': 'oboro',
+    'Lorde': 'lordes'
+};
+
+function obterNomeEmblema(classeName) {
+    return mapearClasseParaEmblema[classeName] || sanitizarNomeArquivo(classeName);
+}
+
 function obterImagemClasse(classeName, genero = 'M') {
-    let fileName = sanitizarNomeArquivo(classeName);
+    let fileName = mapearClasseParaArquivo[classeName] || sanitizarNomeArquivo(classeName);
     const gen = genero.toLowerCase(); // 'm' ou 'f'
 
     // Kagerou usa a arte de Oboro quando o personagem é feminino.
@@ -383,7 +423,9 @@ function renderizarContas() {
             let gen = p.genero || 'M'; // Fallback para chars velhos
             let iconeGen = gen === 'M' ? '<i class="fa-solid fa-mars text-blue-500 drop-shadow-sm ml-1 text-xs"></i>' : '<i class="fa-solid fa-venus text-pink-500 drop-shadow-sm ml-1 text-xs"></i>';
             
-            let fileName = sanitizarNomeArquivo(p.classe);
+            // Usar o mesmo mapeamento para arquivos de emblema
+            let fileName = mapearClasseParaArquivo[p.classe] || sanitizarNomeArquivo(p.classe);
+            let nomeEmblema = obterNomeEmblema(p.classe);
             let fallbackImg = obterFallbackImagemClasse(p.classe, gen);
             
             return `
@@ -391,7 +433,7 @@ function renderizarContas() {
                 
                 <!-- Ícone de Classe (Canto Superior Direito) -->
                 <div class="absolute top-2 right-2 bg-white border border-slate-300 w-7 h-7 rounded flex items-center justify-center shadow-sm z-20" title="${p.classe}">
-                    <img src="img/emblema_${fileName}.png" class="w-6 h-6 object-contain rounded-sm" alt="${p.classe}" onerror="this.src='https://placehold.co/28x28/${corInfo.bg}/${corInfo.text}?text=${p.classe.substring(0,2).toUpperCase()}'">
+                    <img src="img/emblema_${nomeEmblema}.png" class="w-6 h-6 object-contain rounded-sm" alt="${p.classe}" onerror="this.src='https://placehold.co/28x28/${corInfo.bg}/${corInfo.text}?text=${p.classe.substring(0,2).toUpperCase()}'">
                 </div>
                 
                 <!-- Espaço do Personagem (Sprite Dinâmico) -->
