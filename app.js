@@ -157,8 +157,14 @@ function obterFallbackImagemClasse(classeName, genero = 'M') {
 }
 
 function obterImagemClasse(classeName, genero = 'M') {
-    const fileName = sanitizarNomeArquivo(classeName);
+    let fileName = sanitizarNomeArquivo(classeName);
     const gen = genero.toLowerCase(); // 'm' ou 'f'
+
+    // Kagerou usa a arte de Oboro quando o personagem é feminino.
+    if(fileName === 'kagerou' && gen === 'f') {
+        fileName = 'oboro';
+    }
+
     return `img/${fileName}_${gen}.png`;
 }
 
