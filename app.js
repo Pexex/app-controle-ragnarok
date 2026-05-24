@@ -87,8 +87,10 @@ function copiarParaClipboard(texto, info = 'Comando copiado!') {
 let appState = {
     contas: [], // { email: 'x', moedas: 0, personagens: [ { id, nome, classe, level, genero } ] }
     historico: [], // { data, tipo, descricao, valor }
-    gruposAtuais: [], // Array de arrays
+    gruposAtuais: [], // [{ name, members: [...] }]
+    gruposHistorico: [], // histórico de farm por grupo
     instanciaAtual: { nome: '', minLv: 1, maxLv: 250, moedas: 0 },
+    instanciaStatus: {}, // { [instName]: { lastDone: ISO, nextAllowed: ISO } }
     eventos: [] // { id, nome, moeda, descricao, dataFim, ativo, personagensEvento: { charId: quantidade }, requisitos: [], quests: [], loja: [], itensFarmados: [] }
 };
 
@@ -141,13 +143,32 @@ const itensLoja = [
 // --- INICIALIZAÇÃO ---
 window.onload = async () => {
     carregarDadosLocais();
+    manterGruposConsistentes();
     await carregarEventosExternos();
     atualizarSelectsContas();
     renderizarContas();
     renderizarHistorico();
+    renderizarGruposTela();
+    atualizarSelectFarm();
     renderizarEventos();
     atualizarTextareaJson();
     mudarArea('contas');
+
+    // wire up instance selection changes
+    const selectInst = document.getElementById('select-instancia');
+    if (selectInst) {
+        selectInst.addEventListener('change', () => {
+            const rawInst = selectInst.value;
+            const partes = rawInst.split('|');
+            const nomeInst = partes[0];
+            const minLv = parseInt(partes[1]);
+            const maxLv = parseInt(partes[2]);
+            const moedasPrevistas = parseInt(partes[3]);
+            appState.instanciaAtual = { nome: nomeInst, minLv: minLv, maxLv: maxLv, moedas: moedasPrevistas };
+            salvarDados();
+            mostrarToast(`Instância "${nomeInst}" selecionada.`);
+        });
+    }
 };
 
 function mudarArea(areaId) {
@@ -222,6 +243,7 @@ function removerPersonagem(email, idChar) {
         conta.personagens = conta.personagens.filter(p => p.id !== idChar);
         salvarDados();
         renderizarContas();
+        manterGruposConsistentes();
         mostrarToast('Personagem removido.');
     }
 }
@@ -231,6 +253,7 @@ function removerConta(email) {
     salvarDados();
     atualizarSelectsContas();
     renderizarContas();
+    manterGruposConsistentes();
     mostrarToast('Conta removida.');
 }
 
@@ -402,6 +425,9 @@ function focarNovoChar(email) {
     document.getElementById('novo-char-job').value = '1';
     document.getElementById('novo-char-classe').selectedIndex = 0;
     document.querySelector(`input[name="novo-char-genero"][value="M"]`).checked = true; // Reseta pro masculino
+    document.getElementById('novo-char-booster').checked = false; // Resetar booster para novo personagem
+    document.getElementById('novo-char-battlepass').checked = false;
+    document.getElementById('novo-char-battlepass-level').value = '1';
     
     atualizarPreviewClasse(false);
     document.getElementById('modal-criar-char').classList.remove('hidden');
@@ -450,11 +476,14 @@ function confirmarAdicionarPersonagem() {
     const job = parseInt(document.getElementById('novo-char-job').value);
     const genero = document.querySelector('input[name="novo-char-genero"]:checked').value;
     const boosterEvento = document.getElementById('novo-char-booster').checked;
+    const battlePass = document.getElementById('novo-char-battlepass').checked;
+    const battlePassLevel = parseInt(document.getElementById('novo-char-battlepass-level').value) || 1;
 
     if(!email) return mostrarToast('Erro: Email não selecionado.', 'error');
     if(!nome) return mostrarToast('Digite o nome do personagem.', 'error');
     if(isNaN(level) || level < 1 || level > 250) return mostrarToast('Level base inválido (1-250).', 'error');
     if(isNaN(job) || job < 1 || job > 80) return mostrarToast('Level de classe (Job) inválido (1-80).', 'error');
+    if(battlePass && (isNaN(battlePassLevel) || battlePassLevel < 1 || battlePassLevel > 100)) return mostrarToast('Nível do Passe de Batalha inválido (1-100).', 'error');
 
     let conta = appState.contas.find(c => c.email === email);
     conta.personagens.push({
@@ -464,7 +493,9 @@ function confirmarAdicionarPersonagem() {
         level,
         jobLevel: job,
         genero: genero,
-        boosterEvento: boosterEvento
+        boosterEvento: boosterEvento,
+        battlePass: battlePass,
+        battlePassLevel: battlePass ? battlePassLevel : 1
     });
 
     salvarDados();
@@ -496,6 +527,7 @@ function alterarNivelRapido(email, idChar, delta, tipo = 'base') {
             }
             salvarDados();
             renderizarContas();
+            manterGruposConsistentes();
         }
     }
 }
@@ -520,6 +552,8 @@ function abrirModalEditar(email, idChar) {
     document.getElementById('edit-char-classe').innerHTML = document.getElementById('novo-char-classe').innerHTML;
     document.getElementById('edit-char-classe').value = char.classe;
     document.getElementById('edit-char-booster').checked = !!char.boosterEvento;
+    document.getElementById('edit-char-battlepass').checked = !!char.battlePass;
+    document.getElementById('edit-char-battlepass-level').value = char.battlePassLevel || 1;
 
     document.getElementById('modal-editar-char').classList.remove('hidden');
 }
@@ -545,11 +579,15 @@ function alterarJobEdit(delta) {
 function salvarEdicaoModal() {
     let email = document.getElementById('edit-char-email').value;
     let idChar = document.getElementById('edit-char-id').value;
+    let novoNome = document.getElementById('edit-char-nome').value.trim();
     let novoLevel = parseInt(document.getElementById('edit-char-level').value);
     let novoJob = parseInt(document.getElementById('edit-char-job').value);
     let novaClasse = document.getElementById('edit-char-classe').value;
     let novoGenero = document.querySelector('input[name="edit-char-genero"]:checked').value;
 
+    if(!novoNome) {
+        return mostrarToast('Digite o nome do personagem.', 'error');
+    }
     if(isNaN(novoLevel) || novoLevel < 1 || novoLevel > 250) {
         return mostrarToast('Level base inválido (1-250).', 'error');
     }
@@ -557,15 +595,24 @@ function salvarEdicaoModal() {
         return mostrarToast('Job inválido (1-80).', 'error');
     }
 
+    const battlePass = document.getElementById('edit-char-battlepass').checked;
+    const battlePassLevel = parseInt(document.getElementById('edit-char-battlepass-level').value) || 1;
+    if(battlePass && (isNaN(battlePassLevel) || battlePassLevel < 1 || battlePassLevel > 100)) {
+        return mostrarToast('Nível do Passe de Batalha inválido (1-100).', 'error');
+    }
+
     let conta = appState.contas.find(c => c.email === email);
     if(conta) {
         let char = conta.personagens.find(p => p.id === idChar);
         if(char) {
+            char.nome = novoNome;
             char.level = novoLevel;
             char.jobLevel = novoJob;
             char.classe = novaClasse;
             char.genero = novoGenero;
             char.boosterEvento = document.getElementById('edit-char-booster').checked;
+            char.battlePass = battlePass;
+            char.battlePassLevel = battlePass ? battlePassLevel : 1;
             salvarDados();
             renderizarContas();
             fecharModalEditar();
@@ -616,6 +663,7 @@ function renderizarContas() {
             let gen = p.genero || 'M'; // Fallback para chars velhos
             let iconeGen = gen === 'M' ? '<i class="fa-solid fa-mars text-blue-500 drop-shadow-sm ml-1 text-xs"></i>' : '<i class="fa-solid fa-venus text-pink-500 drop-shadow-sm ml-1 text-xs"></i>';
             let boosterBadge = p.boosterEvento ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">Booster</span>' : '';
+            let battlePassBadge = p.battlePass ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">Passe NV ${p.battlePassLevel || 1}</span>` : '';
             
             // Usar o mesmo mapeamento para arquivos de emblema
             let fileName = mapearClasseParaArquivo[p.classe] || sanitizarNomeArquivo(p.classe);
@@ -638,18 +686,19 @@ function renderizarContas() {
             <div class="relative bg-white border-2 border-indigo-100 rounded-lg shadow-sm hover:shadow-md hover:border-indigo-300 transition-all group flex flex-col h-[340px] overflow-hidden">
                 
                 <!-- Ícone de Classe (Canto Superior Direito) + Badge Booster -->
-                <div class="absolute top-2 right-2 flex flex-col items-center gap-1 z-20">
+                <div class="absolute top-3 left-3 flex flex-col items-start gap-1 z-20">
+                    ${boosterBadge ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200 shadow-sm">Booster</span>` : ''}
+                    ${battlePassBadge ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Passe NV ${p.battlePassLevel || 1}</span>` : ''}
+                </div>
+                <div class="absolute top-3 right-3 z-20">
                     <div class="bg-white border border-slate-300 w-7 h-7 rounded flex items-center justify-center shadow-sm" title="${p.classe}">
                         <img src="${emblemFirst}" data-alt="${emblemAlt}" data-fallback="${fallbackSmall}" class="w-6 h-6 object-contain rounded-sm" alt="${p.classe}" onerror="handleImgError(this)">
                     </div>
-                    ${boosterBadge ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200 shadow-sm">Booster</span>` : ''}
                 </div>
-                
-                <!-- Espaço do Personagem (Sprite Dinâmico) -->
-                <div class="flex-1 w-full bg-gradient-to-b from-white to-blue-50/50 flex items-center justify-center relative p-2">
-                    <img src="${spriteFirst}" data-alt="${spriteAlt}" data-fallback="${fallbackLarge}" class="max-h-[160px] object-contain opacity-95 group-hover:opacity-100 group-hover:scale-105 transition-all drop-shadow-md" alt="${p.classe}" onerror="handleImgError(this)">
+                <div class="flex-1 flex items-center justify-center p-4 pt-12 bg-slate-100 min-h-[190px]">
+                    <img src="${spriteFirst}" data-alt="${spriteAlt}" data-fallback="${fallbackLarge}" alt="${p.classe}" class="max-h-full max-w-full object-contain" onerror="handleImgError(this)">
                 </div>
-                
+
                 <!-- Controles de Nível e Edição embutidos no Card -->
                 <div class="bg-slate-50 p-2 border-t border-slate-200 z-10 space-y-1.5">
                     <div class="flex justify-between items-center">
@@ -757,8 +806,10 @@ function gerarGrupos() {
     let todosPersonagens = [];
     appState.contas.forEach(conta => {
         conta.personagens.forEach(p => {
-            if (p.level >= minLv && p.level <= maxLv) {
-                todosPersonagens.push({...p, emailConta: conta.email});
+            const nivelPersonagem = parseInt(p.level, 10);
+            if (isNaN(nivelPersonagem)) return;
+            if (nivelPersonagem >= minLv && nivelPersonagem <= maxLv) {
+                todosPersonagens.push({...p, level: nivelPersonagem, emailConta: conta.email});
             }
         });
     });
@@ -770,48 +821,75 @@ function gerarGrupos() {
 
     todosPersonagens.sort((a, b) => b.level - a.level);
 
+    const targetSize = Math.max(1, maxSize);
+    const maxGroups = Math.ceil(todosPersonagens.length / targetSize);
+
+    // Inicializa todos os grupos vazios — vamos preencher preferencialmente até targetSize
     let grupos = [];
-    
+    for (let i = 0; i < maxGroups; i++) grupos.push([]);
+
+    // Função utilitária para avaliar candidaturas
+    function trataCandidatura(g, p) {
+        if (g.length >= targetSize) return null;
+        const temMesmaConta = g.some(m => m.emailConta === p.emailConta);
+        if (temMesmaConta) return null;
+        const groupMax = g.length ? Math.max(...g.map(m => m.level)) : p.level;
+        const groupMin = g.length ? Math.min(...g.map(m => m.level)) : p.level;
+        const candidateMax = Math.max(groupMax, p.level);
+        const candidateMin = Math.min(groupMin, p.level);
+        const candidateRange = candidateMax - candidateMin;
+        if (candidateRange > 15) return null;
+        return { candidateRange, groupMax };
+    }
+
+    // Para cada personagem, tente colocá-lo em um grupo com espaço, priorizando os grupos mais vazios
     todosPersonagens.forEach(p => {
-        let bestGroup = null;
-        let bestGroupSize = Infinity;
-        let bestCandidateRange = Infinity;
+        let bestIdx = -1;
+        let bestLen = Infinity;
+        let bestRange = Infinity;
 
-        grupos.forEach(g => {
-            if (g.length >= maxSize) return;
-
-            let temMesmaConta = g.some(membro => membro.emailConta === p.emailConta);
-            if (temMesmaConta) return;
-
-            let groupMax = Math.max(...g.map(m => m.level));
-            let groupMin = Math.min(...g.map(m => m.level));
-            let candidateMax = Math.max(groupMax, p.level);
-            let candidateMin = Math.min(groupMin, p.level);
-            let candidateRange = candidateMax - candidateMin;
-            if (candidateRange > 15) return;
-
-            if (
-                g.length < bestGroupSize ||
-                (g.length === bestGroupSize && candidateRange < bestCandidateRange) ||
-                (g.length === bestGroupSize && candidateRange === bestCandidateRange && groupMax < Math.max(...bestGroup.map(m => m.level)))
-            ) {
-                bestGroup = g;
-                bestGroupSize = g.length;
-                bestCandidateRange = candidateRange;
+        // Primeira tentativa: encontra o melhor grupo respeitando CONTA + RANGE
+        for (let i = 0; i < grupos.length; i++) {
+            const g = grupos[i];
+            const cand = trataCandidatura(g, p);
+            if (!cand) continue;
+            if (g.length < bestLen || (g.length === bestLen && cand.candidateRange < bestRange)) {
+                bestIdx = i;
+                bestLen = g.length;
+                bestRange = cand.candidateRange;
             }
-        });
-
-        if (bestGroup) {
-            bestGroup.push(p);
-            bestGroup.sort((a, b) => b.level - a.level);
-        } else {
-            grupos.push([p]);
         }
+
+        if (bestIdx !== -1) {
+            grupos[bestIdx].push(p);
+            grupos[bestIdx].sort((a, b) => b.level - a.level);
+            return;
+        }
+
+        // Segunda tentativa: relaxa RANGE mas NUNCA relaxa a restrição de CONTA
+        for (let i = 0; i < grupos.length; i++) {
+            const g = grupos[i];
+            if (g.length >= targetSize) continue;
+            // Verifica se há alguém da mesma conta — se tiver, pula este grupo
+            const temMesmaConta = g.some(m => m.emailConta === p.emailConta);
+            if (temMesmaConta) continue;
+            // Se não há ninguém da mesma conta, aloca mesmo que o range ultrapasse 15
+            grupos[i].push(p);
+            grupos[i].sort((a, b) => b.level - a.level);
+            return;
+        }
+
+        // Terceira tentativa (fallback): coloca em novo grupo solo
+        grupos.push([p]);
     });
 
-    grupos.sort((a, b) => a.length - b.length || b[0].level - a[0].level);
+    // Remover possíveis grupos vazios (quando total < maxGroups)
+    grupos = grupos.filter(g => g.length > 0);
 
-    appState.gruposAtuais = grupos;
+    // Salva como objetos com nome e membros para permitir nomeação futura
+    // Preserve existing group names if available
+    const oldNames = (appState.gruposAtuais || []).map(g => g.name || '');
+    appState.gruposAtuais = grupos.map((g, i) => ({ name: oldNames[i] || `Grupo ${i+1}`, members: g }));
     appState.instanciaAtual = { nome: nomeInst, minLv: minLv, maxLv: maxLv, moedas: moedasPrevistas };
     
     mostrarToast('Grupos gerados com base nas regras!');
@@ -835,15 +913,16 @@ function renderizarGruposTela() {
                 <p class="text-indigo-600 text-sm font-medium"><i class="fa-solid fa-ranking-star"></i> Requisito: ${nivelText}</p>
             </div>
             <div class="text-right">
-                <span class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">Previsão: ${moedas} Moedas</span>
+                <div class="mt-2"><span class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">Previsão: ${moedas} Moedas</span></div>
             </div>
         </div>
     `;
     container.innerHTML = headerHtml;
 
-    appState.gruposAtuais.forEach((grupo, idx) => {
-        let maxLvl = Math.max(...grupo.map(p => p.level));
-        let minLvl = Math.min(...grupo.map(p => p.level));
+    appState.gruposAtuais.forEach((grupoObj, idx) => {
+        const grupo = grupoObj.members || [];
+        let maxLvl = grupo.length ? Math.max(...grupo.map(p => p.level)) : 0;
+        let minLvl = grupo.length ? Math.min(...grupo.map(p => p.level)) : 0;
         let temSup = grupo.some(p => isSuporte(p.classe));
 
         let flagSup = temSup ? `<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded border border-green-200 font-medium ml-2"><i class="fa-solid fa-plus-circle"></i> C/ Suporte</span>` : `<span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200 font-medium ml-2"><i class="fa-solid fa-triangle-exclamation"></i> Sem Suporte</span>`;
@@ -860,14 +939,22 @@ function renderizarGruposTela() {
                     </div>`;
         }).join('');
 
+        const groupName = grupoObj.name || `Grupo ${idx + 1}`;
         container.innerHTML += `
             <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-4">
                 <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
-                    <h4 class="font-bold text-slate-700">Grupo ${idx + 1}</h4>
+                    <div class="flex items-center gap-3">
+                        <h4 class="font-bold text-slate-700">${groupName}</h4>
+                        <input type="text" data-idx="${idx}" class="group-name-input ml-3 p-1 px-2 text-sm border rounded" value="${groupName}" placeholder="Nome do grupo" />
+                    </div>
                     <div class="flex items-center text-xs text-slate-500 font-medium">
                         <span class="bg-white px-2 py-1 rounded border shadow-sm">Membros: ${grupo.length}</span>
                         <span class="bg-white px-2 py-1 rounded border shadow-sm ml-2">Nv ${maxLvl} ~ ${minLvl}</span>
                         ${flagSup}
+                        <div class="ml-3">
+                            <button data-grupo-idx="${idx}" class="btn-marcar-grupo px-2 py-1 bg-green-500 text-white rounded text-xs ml-2">Marcar feito</button>
+                            <div id="status-grupo-${idx}" class="text-[10px] text-slate-500 mt-1"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="p-4">
@@ -878,9 +965,258 @@ function renderizarGruposTela() {
             </div>
         `;
     });
+
+    // attach listeners for group name inputs and per-group marcar buttons
+    setTimeout(() => {
+        document.querySelectorAll('.group-name-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const idx = parseInt(e.target.getAttribute('data-idx'));
+                const val = e.target.value.trim() || `Grupo ${idx+1}`;
+                if(appState.gruposAtuais[idx]) appState.gruposAtuais[idx].name = val;
+                atualizarSelectFarm();
+            });
+        });
+
+        document.querySelectorAll('.btn-marcar-grupo').forEach(btn => {
+            const idx = parseInt(btn.getAttribute('data-grupo-idx'));
+            const instName = appState.instanciaAtual && appState.instanciaAtual.nome ? appState.instanciaAtual.nome : '';
+            // set disabled state based on per-group cooldown
+            const st = appState.instanciaStatus && appState.instanciaStatus[instName] && appState.instanciaStatus[instName].groups ? appState.instanciaStatus[instName].groups[idx] : null;
+            const statusDiv = document.getElementById(`status-grupo-${idx}`);
+            const now = new Date();
+            if (st && st.nextAllowed) {
+                const next = new Date(st.nextAllowed);
+                if (now < next) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-40', 'cursor-not-allowed');
+                    if(statusDiv) statusDiv.innerText = `Próx.: ${next.toLocaleString()}`;
+                } else {
+                    btn.disabled = false;
+                    if(statusDiv) statusDiv.innerText = st.lastDone ? `Últ.: ${new Date(st.lastDone).toLocaleString()}` : '';
+                }
+            } else {
+                btn.disabled = false;
+                if(statusDiv) statusDiv.innerText = '';
+            }
+
+            btn.onclick = () => {
+                if(!instName) return mostrarToast('Nenhuma instância selecionada.', 'error');
+                abrirModalConfirmarInstancia(instName, idx);
+            };
+        });
+    }, 50);
+}
+
+// --- MODAL CONFIRMAÇÃO INSTÂNCIA ---
+// Abre o modal com detalhes da instância/grupo que será marcado como feito
+function abrirModalConfirmarInstancia(instName, groupIdx = null) {
+    const instancia = appState.instanciaAtual;
+    const moedas = instancia && instancia.moedas ? parseInt(instancia.moedas) : 0;
+    
+    let grupo = [];
+    let emailsAlvos = [];
+    let grupoName = '';
+    
+    if (groupIdx !== null && appState.gruposAtuais && appState.gruposAtuais[groupIdx]) {
+        grupo = appState.gruposAtuais[groupIdx].members || [];
+        grupoName = appState.gruposAtuais[groupIdx].name || `Grupo ${groupIdx+1}`;
+        emailsAlvos = [...new Set(grupo.map(m => m.emailConta))];
+    } else {
+        // marcar todos os grupos
+        if (appState.gruposAtuais) {
+            appState.gruposAtuais.forEach(g => {
+                grupo = grupo.concat(g.members || []);
+            });
+            emailsAlvos = [...new Set(grupo.map(m => m.emailConta))];
+            grupoName = 'Todos os grupos';
+        }
+    }
+
+    // Preenche o modal
+    document.getElementById('modal-inst-name').innerText = instName || 'Desconhecida';
+    document.getElementById('modal-grupo-name').innerText = grupoName;
+    document.getElementById('modal-moedas-valor').innerText = `${moedas} moedas`;
+    document.getElementById('modal-total-contas').innerText = emailsAlvos.length;
+
+    // Lista de personagens
+    const listDiv = document.getElementById('modal-personagens-list');
+    listDiv.innerHTML = '';
+    grupo.forEach(p => {
+        const cor = obterCorClasse(p.classe);
+        listDiv.innerHTML += `
+            <div class="bg-white border border-slate-200 rounded p-2 text-sm flex justify-between items-start">
+                <div>
+                    <span class="font-bold">${p.nome}</span>
+                    <span class="block text-[11px] text-slate-500">${p.classe} (Nv ${p.level})</span>
+                </div>
+                <span class="text-[10px] bg-slate-200 px-2 py-1 rounded whitespace-nowrap">${p.emailConta}</span>
+            </div>
+        `;
+    });
+
+    // Armazena params para confirmar depois
+    window._pendingInstanciaConfirm = { instName, groupIdx };
+
+    // Abre o modal
+    document.getElementById('modal-confirmar-instancia').classList.remove('hidden');
+}
+
+function fecharModalConfirmarInstancia() {
+    document.getElementById('modal-confirmar-instancia').classList.add('hidden');
+    window._pendingInstanciaConfirm = null;
+}
+
+function confirmarMarcacaoInstancia() {
+    if (!window._pendingInstanciaConfirm) return;
+    const { instName, groupIdx } = window._pendingInstanciaConfirm;
+    fecharModalConfirmarInstancia();
+    marcarInstanciaFeita(instName, groupIdx);
 }
 
 // --- FARM E MOEDAS ---
+// Mantém os grupos consistentes: remove membros fora do range e tenta preencher vagas
+function manterGruposConsistentes() {
+    if(!appState.gruposAtuais || appState.gruposAtuais.length === 0) return;
+    const min = appState.instanciaAtual.minLv || 1;
+    const max = appState.instanciaAtual.maxLv || 250;
+    const targetSize = parseInt(document.getElementById('tamanho-grupo')?.value) || 5;
+
+    // Remove membros que não existem mais ou estão fora do range
+    let changed = false;
+    appState.gruposAtuais.forEach(g => {
+        const before = (g.members || []).length;
+        g.members = (g.members || []).filter(m => {
+            const conta = appState.contas.find(c => c.email === m.emailConta);
+            if(!conta) return false;
+            const char = conta.personagens.find(p => p.id === m.id);
+            if(!char) return false;
+            return char.level >= min && char.level <= max;
+        });
+        if(g.members.length !== before) changed = true;
+    });
+
+    // Recria pool de candidatos elegíveis (não em grupos)
+    let inGroupIds = new Set();
+    appState.gruposAtuais.forEach(g => (g.members || []).forEach(m => inGroupIds.add(m.id)));
+    let pool = [];
+    appState.contas.forEach(c => {
+        c.personagens.forEach(p => {
+            if(p.level >= min && p.level <= max && !inGroupIds.has(p.id)) {
+                pool.push({ ...p, emailConta: c.email });
+            }
+        });
+    });
+
+    // Tenta preencher grupos até targetSize (último grupo pode ficar menor)
+    for(let i=0;i<appState.gruposAtuais.length;i++){
+        const g = appState.gruposAtuais[i];
+        while((g.members || []).length < targetSize && pool.length > 0) {
+            // prefira candidato de conta diferente
+            let idx = pool.findIndex(cand => !(g.members || []).some(m => m.emailConta === cand.emailConta));
+            if(idx === -1) idx = 0;
+            const cand = pool.splice(idx,1)[0];
+            g.members.push(cand);
+            changed = true;
+        }
+    }
+
+    if(changed) {
+        salvarDados();
+        renderizarGruposTela();
+        atualizarSelectFarm();
+    }
+}
+
+// Marca a instância como feita agora e calcula próxima permissão (próximo dia às 4:00)
+function marcarInstanciaFeita(instName, groupIdx = null) {
+    const now = new Date();
+    // calcula próximo 4:00
+    const next4 = new Date(now);
+    next4.setHours(4,0,0,0);
+    if(now >= next4) {
+        // já passou hoje 4:00, então próxima é amanhã 4:00
+        next4.setDate(next4.getDate() + 1);
+    }
+    appState.instanciaStatus = appState.instanciaStatus || {};
+    appState.instanciaStatus[instName] = appState.instanciaStatus[instName] || { lastDone: null, nextAllowed: null, groups: {} };
+
+    const moedasPorConta = appState.instanciaAtual && appState.instanciaAtual.moedas ? parseInt(appState.instanciaAtual.moedas) : 0;
+
+    if (groupIdx === null) {
+        // marca a instância globalmente e credita para todos os grupos (compatibilidade)
+        appState.instanciaStatus[instName].lastDone = now.toISOString();
+        appState.instanciaStatus[instName].nextAllowed = next4.toISOString();
+
+        if (moedasPorConta > 0 && appState.gruposAtuais && appState.gruposAtuais.length > 0) {
+            appState.gruposHistorico = appState.gruposHistorico || [];
+            appState.gruposAtuais.forEach((gObj, idx) => {
+                const grupoName = gObj.name || `Grupo ${idx+1}`;
+                const membros = gObj.members || [];
+                const emailsAlvos = [...new Set(membros.map(m => m.emailConta))];
+
+                emailsAlvos.forEach(email => {
+                    const c = appState.contas.find(x => x.email === email);
+                    if (c) {
+                        c.moedas = (c.moedas || 0) + moedasPorConta;
+                        registrarNoHistorico(email, `Auto Farm: ${instName} (${grupoName})`, moedasPorConta);
+                    }
+                });
+
+                appState.gruposHistorico.unshift({
+                    data: now.toISOString(),
+                    grupoIdx: idx,
+                    grupoName: grupoName,
+                    instancia: instName,
+                    moedas: moedasPorConta,
+                    emails: emailsAlvos,
+                    auto: true
+                });
+            });
+            if (appState.gruposHistorico.length > 200) appState.gruposHistorico.splice(200);
+        }
+    } else {
+        // marca e credita apenas o grupo especificado
+        appState.instanciaStatus[instName].groups = appState.instanciaStatus[instName].groups || {};
+        appState.instanciaStatus[instName].groups[groupIdx] = {
+            lastDone: now.toISOString(),
+            nextAllowed: next4.toISOString()
+        };
+
+        if (moedasPorConta > 0 && appState.gruposAtuais && appState.gruposAtuais.length > groupIdx) {
+            appState.gruposHistorico = appState.gruposHistorico || [];
+            const gObj = appState.gruposAtuais[groupIdx];
+            const grupoName = gObj.name || `Grupo ${groupIdx+1}`;
+            const membros = gObj.members || [];
+            const emailsAlvos = [...new Set(membros.map(m => m.emailConta))];
+
+            emailsAlvos.forEach(email => {
+                const c = appState.contas.find(x => x.email === email);
+                if (c) {
+                    c.moedas = (c.moedas || 0) + moedasPorConta;
+                    registrarNoHistorico(email, `Auto Farm: ${instName} (${grupoName})`, moedasPorConta);
+                }
+            });
+
+            appState.gruposHistorico.unshift({
+                data: now.toISOString(),
+                grupoIdx: groupIdx,
+                grupoName: grupoName,
+                instancia: instName,
+                moedas: moedasPorConta,
+                emails: emailsAlvos,
+                auto: true
+            });
+            if (appState.gruposHistorico.length > 200) appState.gruposHistorico.splice(200);
+        }
+    }
+
+    salvarDados();
+    renderizarContas();
+    renderizarHistorico();
+    renderizarGruposTela();
+    atualizarSelectFarm();
+}
+
 function atualizarSelectFarm() {
     let sel = document.getElementById('select-grupo-farm');
     sel.innerHTML = '';
@@ -893,9 +1229,11 @@ function atualizarSelectFarm() {
         sel.innerHTML = '<option value="">Nenhum grupo gerado ainda</option>';
         return;
     }
-    
+
     appState.gruposAtuais.forEach((g, idx) => {
-        sel.innerHTML += `<option value="${idx}">Grupo ${idx + 1} (${g.length} membros)</option>`;
+        const name = g.name || `Grupo ${idx+1}`;
+        const count = (g.members || []).length;
+        sel.innerHTML += `<option value="${idx}">${name} (${count} membros)</option>`;
     });
 }
 
@@ -905,7 +1243,8 @@ function registrarFarmGrupo() {
     
     if(idx === "" || isNaN(moedas) || moedas <= 0) return mostrarToast('Valores inválidos para farm.', 'error');
     
-    let grupo = appState.gruposAtuais[idx];
+    let grupoObj = appState.gruposAtuais[idx];
+    let grupo = grupoObj ? (grupoObj.members || []) : [];
     let instName = appState.instanciaAtual.nome || 'Instância Desconhecida';
 
     let emailsAlvos = [...new Set(grupo.map(p => p.emailConta))];
@@ -917,6 +1256,18 @@ function registrarFarmGrupo() {
             registrarNoHistorico(email, `Farm: ${instName} (Grupo ${parseInt(idx)+1})`, moedas);
         }
     });
+
+    // Registra histórico do grupo
+    appState.gruposHistorico = appState.gruposHistorico || [];
+    appState.gruposHistorico.unshift({
+        data: new Date().toISOString(),
+        grupoIdx: parseInt(idx),
+        grupoName: grupoObj ? grupoObj.name : `Grupo ${parseInt(idx)+1}`,
+        instancia: instName,
+        moedas: moedas,
+        emails: emailsAlvos
+    });
+    if(appState.gruposHistorico.length > 200) appState.gruposHistorico.pop();
 
     salvarDados();
     renderizarContas();
@@ -1081,7 +1432,10 @@ function salvarDados() {
     let dadosSalvar = {
         contas: appState.contas,
         historico: appState.historico,
-        eventos: appState.eventos
+        eventos: appState.eventos,
+        gruposAtuais: appState.gruposAtuais,
+        gruposHistorico: appState.gruposHistorico,
+        instanciaStatus: appState.instanciaStatus
     };
     let jsonString = JSON.stringify(dadosSalvar, null, 2);
     localStorage.setItem('roFarmData', jsonString);
@@ -1096,6 +1450,9 @@ function carregarDadosLocais() {
             appState.contas = obj.contas || [];
             appState.historico = obj.historico || [];
             appState.eventos = obj.eventos || [];
+            appState.gruposAtuais = obj.gruposAtuais || [];
+            appState.gruposHistorico = obj.gruposHistorico || [];
+            appState.instanciaStatus = obj.instanciaStatus || {};
         } catch(e) {
             console.error('Erro ao carregar dados locais', e);
         }
