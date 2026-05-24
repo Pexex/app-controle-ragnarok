@@ -765,11 +765,24 @@ function renderizarContas() {
                     </h3>
                     <span class="text-sm text-slate-500 font-medium">Slots Ocupados: ${conta.personagens.length}</span>
                 </div>
-                <div class="mt-3 md:mt-0 bg-blue-50 px-4 py-2 rounded-xl shadow-inner border border-blue-100 flex items-center gap-3">
-                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Moedas (Conta)</span>
-                    <span class="text-xl font-black text-yellow-600 flex items-center gap-1 drop-shadow-sm">
-                        ${conta.moedas} <i class="fa-solid fa-coins text-sm"></i>
-                    </span>
+                <div class="flex flex-col gap-2 mt-3 md:mt-0">
+                    <div class="bg-blue-50 px-4 py-2 rounded-xl shadow-inner border border-blue-100 flex items-center gap-3">
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Moedas (Desbravadores)</span>
+                        <span class="text-xl font-black text-yellow-600 flex items-center gap-1 drop-shadow-sm">
+                            ${conta.moedas} <i class="fa-solid fa-coins text-sm"></i>
+                        </span>
+                    </div>
+                    ${(conta.moedasEventos && Object.keys(conta.moedasEventos).length > 0) ? `
+                        <div class="bg-amber-50 px-4 py-2 rounded-xl shadow-inner border border-amber-100 flex items-center gap-3">
+                            <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Moedas (Eventos)</span>
+                            <span class="text-lg font-black text-amber-600 flex items-center gap-2 drop-shadow-sm">
+                                ${Object.entries(conta.moedasEventos).map(([evId, qtd]) => {
+                                    const ev = appState.eventos.find(e => e.id === evId);
+                                    return ev ? `<span title="${ev.nome}">${qtd}✦</span>` : '';
+                                }).filter(Boolean).join(' ')}
+                            </span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             
@@ -2418,11 +2431,15 @@ function registrarFarmRapido(eventoId, charId = null) {
     }
     if(contaEmail) registrarNoHistorico(contaEmail, `Recebido no evento: ${eventoModelo.nome} (+${qtd} ${getEventoMoeda(eventoModelo)})`, qtd);
     
-    // Para eventos booster, credita moedas à conta do personagem
-    if(eventoModelo.booster && contaEmail) {
+    // Credita moedas do evento em conta.moedasEventos (separado de desbravadores)
+    if(contaEmail) {
         const conta = appState.contas.find(c => c.email === contaEmail);
         if(conta) {
-            conta.moedas += qtd;
+            // Cria estrutura de moedas de eventos se não existir
+            if(!conta.moedasEventos) conta.moedasEventos = {};
+            if(!conta.moedasEventos[eventoId]) conta.moedasEventos[eventoId] = 0;
+            
+            conta.moedasEventos[eventoId] += qtd;
             salvarDados();
             renderizarContas();
         }
@@ -2446,7 +2463,31 @@ function ajustarFarmEvento(eventoId, charId, delta) {
         delete evento.personagensEvento[charId];
     }
 
+    // Também ajusta as moedas de evento na conta
+    let contaEmail = null;
+    for(const c of appState.contas) {
+        if(c.personagens.some(p => p.id === charId)) { 
+            contaEmail = c.email; 
+            break; 
+        }
+    }
+    
+    if(contaEmail) {
+        const conta = appState.contas.find(c => c.email === contaEmail);
+        if(conta) {
+            if(!conta.moedasEventos) conta.moedasEventos = {};
+            if(!conta.moedasEventos[eventoId]) conta.moedasEventos[eventoId] = 0;
+            conta.moedasEventos[eventoId] += delta;
+            
+            // Remove se não houver mais moedas
+            if(conta.moedasEventos[eventoId] <= 0) {
+                delete conta.moedasEventos[eventoId];
+            }
+        }
+    }
+
     salvarDados();
+    renderizarContas();
     renderizarEventos();
 }
 
@@ -2527,8 +2568,30 @@ function parseReward(recompensaStr) {
 function removerFarmEvento(eventoId, charId) {
     const evento = appState.eventos.find(e => e.id === eventoId);
     if(evento && evento.personagensEvento[charId]) {
+        const qtdRemovida = evento.personagensEvento[charId];
         delete evento.personagensEvento[charId];
+        
+        // Também remove as moedas de evento da conta
+        let contaEmail = null;
+        for(const c of appState.contas) {
+            if(c.personagens.some(p => p.id === charId)) { 
+                contaEmail = c.email; 
+                break; 
+            }
+        }
+        
+        if(contaEmail) {
+            const conta = appState.contas.find(c => c.email === contaEmail);
+            if(conta && conta.moedasEventos && conta.moedasEventos[eventoId]) {
+                conta.moedasEventos[eventoId] -= qtdRemovida;
+                if(conta.moedasEventos[eventoId] <= 0) {
+                    delete conta.moedasEventos[eventoId];
+                }
+            }
+        }
+        
         salvarDados();
+        renderizarContas();
         renderizarEventos();
         mostrarToast('Registro removido.');
     }
