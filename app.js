@@ -1247,6 +1247,22 @@ function registrarFarmGrupo() {
     let grupo = grupoObj ? (grupoObj.members || []) : [];
     let instName = appState.instanciaAtual.nome || 'Instância Desconhecida';
 
+    // Verifica se há algum personagem booster no grupo
+    let temBooster = false;
+    grupo.forEach(p => {
+        const conta = appState.contas.find(c => c.email === p.emailConta);
+        if(conta) {
+            const char = conta.personagens.find(c => c.id === p.id);
+            if(char && char.boosterEvento) {
+                temBooster = true;
+            }
+        }
+    });
+
+    if(temBooster) {
+        return mostrarToast('Este grupo contém personagem booster de evento. Registre o farm deles na aba do evento correspondente.', 'error');
+    }
+
     let emailsAlvos = [...new Set(grupo.map(p => p.emailConta))];
     
     emailsAlvos.forEach(email => {
@@ -2382,8 +2398,22 @@ function registrarFarmRapido(eventoId, charId = null) {
 
         var qtd = caixaCoins + totalFromQuests;
         if(qtd <= 0) return mostrarToast('Nenhuma moeda selecionada para adicionar.', 'error');
+
+        // Bloqueia registro de booster via seletor (farm manual)
+        if(!isContaSaldoEvento) {
+            const charObj = encontrarPersonagem(registroId);
+            if(charObj && charObj.boosterEvento) {
+                return mostrarToast('Farm de booster deve ser registrado via aba do evento booster.', 'error');
+            }
+        }
     } else {
         // existing quick-register path (from character card)
+        // Bloqueia registro rápido de booster
+        const charObj = encontrarPersonagem(charId);
+        if(charObj && charObj.boosterEvento) {
+            return mostrarToast('Farm de booster deve ser registrado via aba do evento booster.', 'error');
+        }
+
         const qtdInput = document.getElementById(`qty-input-${evento.id}`);
         var qtd = qtdInput ? parseInt(qtdInput.value) || 1 : 1;
     }
