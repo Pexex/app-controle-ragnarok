@@ -758,33 +758,44 @@ function renderizarContas() {
                 <i class="fa-solid fa-trash"></i>
             </button>
             
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-blue-200 pb-4 pr-12">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-blue-200 pb-4 pr-12 gap-4">
                 <div>
                     <h3 class="font-bold text-xl text-slate-700 flex items-center gap-2">
                         <i class="fa-solid fa-desktop text-indigo-500"></i> ${conta.email}
                     </h3>
                     <span class="text-sm text-slate-500 font-medium">Slots Ocupados: ${conta.personagens.length}</span>
                 </div>
-                <div class="flex flex-col gap-2 mt-3 md:mt-0">
+                <div class="flex-1">
                     <div class="bg-blue-50 px-4 py-2 rounded-xl shadow-inner border border-blue-100 flex items-center gap-3">
                         <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Moedas (Desbravadores)</span>
                         <span class="text-xl font-black text-yellow-600 flex items-center gap-1 drop-shadow-sm">
                             ${conta.moedas} <i class="fa-solid fa-coins text-sm"></i>
                         </span>
                     </div>
-                    ${(conta.moedasEventos && Object.keys(conta.moedasEventos).length > 0) ? `
-                        <div class="bg-amber-50 px-4 py-2 rounded-xl shadow-inner border border-amber-100 flex items-center gap-3">
-                            <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Moedas (Eventos)</span>
-                            <span class="text-lg font-black text-amber-600 flex items-center gap-2 drop-shadow-sm">
-                                ${Object.entries(conta.moedasEventos).map(([evId, qtd]) => {
-                                    const ev = appState.eventos.find(e => e.id === evId);
-                                    return ev ? `<span title="${ev.nome}">${qtd}✦</span>` : '';
-                                }).filter(Boolean).join(' ')}
-                            </span>
-                        </div>
-                    ` : ''}
                 </div>
             </div>
+            
+            ${(conta.moedasEventos && Object.keys(conta.moedasEventos).length > 0) ? `
+                <div class="mb-5 pb-4">
+                    <h4 class="text-sm font-bold text-slate-600 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-star text-amber-500"></i> Moedas de Eventos
+                    </h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        ${Object.entries(conta.moedasEventos).map(([evId, qtd]) => {
+                            const ev = appState.eventos.find(e => e.id === evId);
+                            if(!ev) return '';
+                            const moedaIcon = getEventoMoeda(ev) || '✦';
+                            return `
+                                <div class="bg-gradient-to-br from-amber-50 to-orange-50 px-3 py-2 rounded-lg shadow-sm border border-amber-200 flex flex-col items-center gap-1 hover:shadow-md transition-shadow">
+                                    <span class="text-xs font-semibold text-amber-700 text-center line-clamp-2">${ev.nome}</span>
+                                    <span class="text-lg font-black text-amber-600">${qtd}</span>
+                                    <span class="text-xs text-amber-500">${moedaIcon}</span>
+                                </div>
+                            `;
+                        }).filter(Boolean).join('')}
+                    </div>
+                </div>
+            ` : ''}
             
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 ${charsHtml}
