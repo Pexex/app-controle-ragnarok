@@ -1556,6 +1556,117 @@ function mesclarEventos(importados) {
     });
 }
 
+function selecionarOpcaoConflito(index, opcao) {
+    const cardLocal = document.getElementById(`card-local-${index}`);
+    const cardImport = document.getElementById(`card-import-${index}`);
+    const inputLocal = document.getElementById(`input-local-${index}`);
+    const inputImport = document.getElementById(`input-import-${index}`);
+    
+    if (opcao === 'local') {
+        inputLocal.checked = true;
+        cardLocal.classList.replace('border-slate-200', 'border-indigo-400');
+        cardLocal.classList.add('bg-indigo-50/50');
+        
+        cardImport.classList.replace('border-indigo-400', 'border-slate-200');
+        cardImport.classList.remove('bg-indigo-50/50');
+    } else {
+        inputImport.checked = true;
+        cardImport.classList.replace('border-slate-200', 'border-indigo-400');
+        cardImport.classList.add('bg-indigo-50/50');
+        
+        cardLocal.classList.replace('border-indigo-400', 'border-slate-200');
+        cardLocal.classList.remove('bg-indigo-50/50');
+    }
+}
+
+function gerarHtmlComparacaoPersonagens(localChars, importChars) {
+    const todosNomes = new Set([
+        ...localChars.map(p => p.nome.toLowerCase()),
+        ...importChars.map(p => p.nome.toLowerCase())
+    ]);
+    
+    let html = `
+    <div class="mt-2 border border-slate-200 rounded-xl overflow-hidden bg-white shrink-0 shadow-sm">
+        <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 text-[10px] font-bold text-slate-700 flex justify-between">
+            <span class="w-1/3"><i class="fa-solid fa-gamepad mr-1"></i> Personagem</span>
+            <div class="w-2/3 flex justify-between">
+                <span class="w-1/2 text-center border-r border-slate-200">Local</span>
+                <span class="w-1/2 text-center">Importado</span>
+            </div>
+        </div>
+        <div class="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+    `;
+    
+    todosNomes.forEach(nomeLower => {
+        const pLocal = localChars.find(p => p.nome.toLowerCase() === nomeLower);
+        const pImport = importChars.find(p => p.nome.toLowerCase() === nomeLower);
+        
+        let charName = '';
+        let localStatus = '';
+        let importStatus = '';
+        let rowClass = 'hover:bg-slate-50';
+        
+        if (pLocal && pImport) {
+            charName = pLocal.nome;
+            
+            const levelChanged = pLocal.level !== pImport.level;
+            const classChanged = pLocal.classe !== pImport.classe;
+            const boosterChanged = pLocal.boosterEvento !== pImport.boosterEvento;
+            
+            if (levelChanged || classChanged || boosterChanged) {
+                rowClass = 'bg-amber-50/30 hover:bg-amber-50';
+                
+                // Nível
+                const localLvl = levelChanged ? `<span class="text-slate-500 font-bold">${pLocal.level}</span>` : pLocal.level;
+                let importLvl = pImport.level;
+                if (levelChanged) {
+                    const levelDiff = pImport.level - pLocal.level;
+                    const diffSign = levelDiff > 0 ? `+${levelDiff}` : levelDiff;
+                    const diffColor = levelDiff > 0 ? 'text-green-600 font-bold' : 'text-red-500 font-bold';
+                    importLvl = `<span class="${diffColor}">${pImport.level} (${diffSign})</span>`;
+                }
+                
+                // Classe
+                const localClass = classChanged ? `<span class="text-slate-400 text-[10px]">${pLocal.classe}</span>` : pLocal.classe;
+                const importClass = classChanged ? `<span class="text-indigo-600 text-[10px] font-bold">${pImport.classe}</span>` : pImport.classe;
+                
+                localStatus = `Nv ${localLvl} · ${localClass}`;
+                importStatus = `Nv ${importLvl} · ${importClass}`;
+            } else {
+                localStatus = `Nv ${pLocal.level} · ${pLocal.classe}`;
+                importStatus = `Nv ${pImport.level} · ${pImport.classe}`;
+            }
+        } else if (pLocal) {
+            charName = pLocal.nome;
+            rowClass = 'bg-red-50/20 hover:bg-red-50/30';
+            localStatus = `Nv ${pLocal.level} · ${pLocal.classe}`;
+            importStatus = `<span class="text-red-500 text-[10px] font-semibold bg-red-50 px-2 py-0.5 rounded border border-red-200"><i class="fa-solid fa-trash-can mr-1"></i>Removido</span>`;
+        } else if (pImport) {
+            charName = pImport.nome;
+            rowClass = 'bg-green-50/20 hover:bg-green-50/30';
+            localStatus = `<span class="text-slate-400 text-[10px] font-medium bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Não existe</span>`;
+            importStatus = `<span class="text-green-600 text-[10px] font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200"><i class="fa-solid fa-plus mr-1"></i>Novo</span> <span class="text-[10px] text-slate-500 ml-1">Nv ${pImport.level} · ${pImport.classe}</span>`;
+        }
+        
+        html += `
+            <div class="px-4 py-2 flex items-center justify-between text-[11px] ${rowClass}">
+                <span class="w-1/3 font-bold text-slate-700 truncate pr-2" title="${charName}">${charName}</span>
+                <div class="w-2/3 flex justify-between">
+                    <div class="w-1/2 text-center text-slate-500 truncate border-r border-slate-100 pr-1" title="${localStatus.replace(/<[^>]*>/g, '')}">${localStatus}</div>
+                    <div class="w-1/2 text-center text-slate-600 font-medium truncate pl-1" title="${importStatus.replace(/<[^>]*>/g, '')}">${importStatus}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+        </div>
+    </div>
+    `;
+    
+    return html;
+}
+
 function renderizarConflitosImportacao(emailsConflito, contasLocais, contasImportadas) {
     const container = document.getElementById('lista-conflitos-contas');
     container.innerHTML = '';
@@ -1563,9 +1674,6 @@ function renderizarConflitosImportacao(emailsConflito, contasLocais, contasImpor
     emailsConflito.forEach((email, index) => {
         const local = contasLocais.find(c => c.email.toLowerCase() === email);
         const importada = contasImportadas.find(c => c.email.toLowerCase() === email);
-        
-        const localCharsStr = (local.personagens || []).map(p => `${p.nome} (Nv ${p.level} ${p.classe})`).join(', ') || 'Nenhum';
-        const importadaCharsStr = (importada.personagens || []).map(p => `${p.nome} (Nv ${p.level} ${p.classe})`).join(', ') || 'Nenhum';
         
         const localDateStr = local.lastUpdated ? new Date(local.lastUpdated).toLocaleString('pt-BR') : 'Sem data';
         const importDateStr = importada.lastUpdated ? new Date(importada.lastUpdated).toLocaleString('pt-BR') : 'Sem data';
@@ -1595,55 +1703,73 @@ function renderizarConflitosImportacao(emailsConflito, contasLocais, contasImpor
         const badgeLocal = localRecomendado ? '<span class="absolute top-3 right-3 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow"><i class="fa-solid fa-star text-[8px]"></i> Recomendado</span>' : '';
         const badgeImport = importadaRecomendada ? '<span class="absolute top-3 right-3 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow"><i class="fa-solid fa-star text-[8px]"></i> Recomendado</span>' : '';
 
+        // Moedas diffs
+        let diffMoedasLocalStr = '';
+        let diffMoedasImportStr = '';
+        if (local.moedas !== importada.moedas) {
+            const diff = importada.moedas - local.moedas;
+            if (diff > 0) {
+                diffMoedasImportStr = ` <span class="text-green-600 text-[10px] font-bold bg-green-100 px-1.5 py-0.5 rounded ml-1" title="Mais moedas na versão importada">(+${diff})</span>`;
+            } else {
+                diffMoedasLocalStr = ` <span class="text-green-600 text-[10px] font-bold bg-green-100 px-1.5 py-0.5 rounded ml-1" title="Mais moedas na versão local">(+${Math.abs(diff)})</span>`;
+            }
+        }
+
+        const comparacaoPersonagensHtml = gerarHtmlComparacaoPersonagens(local.personagens || [], importada.personagens || []);
+
         const html = `
-            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4 relative">
                 <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-envelope text-indigo-500 mr-2"></i>Conta: ${local.email}</h3>
-                    <span class="text-xs font-semibold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg">Conflito de Redundância</span>
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-envelope text-indigo-500"></i>Conta: ${local.email}</h3>
+                    <span class="text-xs font-semibold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg">Conflito Detectado</span>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- OPÇÃO A: LOCAL -->
-                    <label class="relative cursor-pointer border-2 rounded-xl p-4 flex flex-col justify-between transition-all hover:border-indigo-300 shadow-sm ${cardLocalActive}">
-                        <input type="radio" name="conflict-${index}" value="local" class="absolute bottom-4 right-4 w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500" ${localRecomendado ? 'checked' : ''} />
+                    <label id="card-local-${index}" onclick="selecionarOpcaoConflito(${index}, 'local')" class="relative cursor-pointer border-2 rounded-xl p-4 flex flex-col justify-between transition-all hover:border-indigo-300 shadow-sm ${cardLocalActive}">
+                        <input type="radio" id="input-local-${index}" name="conflict-${index}" value="local" class="absolute bottom-4 right-4 w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500" ${localRecomendado ? 'checked' : ''} />
                         ${badgeLocal}
                         <div class="space-y-2 pr-6">
                             <span class="block text-xs font-extrabold uppercase text-slate-500 tracking-wider">Dispositivo Local (Dados Atuais)</span>
                             <div class="flex items-center gap-4 py-1">
                                 <div>
                                     <span class="block text-[10px] text-slate-400 font-bold uppercase">Moedas</span>
-                                    <span class="text-lg font-black text-yellow-600 flex items-center gap-1">${local.moedas} <i class="fa-solid fa-coins text-sm"></i></span>
+                                    <span class="text-lg font-black text-yellow-600 flex items-center gap-1">${local.moedas}${diffMoedasLocalStr} <i class="fa-solid fa-coins text-sm"></i></span>
                                 </div>
                                 <div class="border-l border-slate-200 pl-4">
                                     <span class="block text-[10px] text-slate-400 font-bold uppercase">Personagens</span>
                                     <span class="text-lg font-black text-slate-700">${(local.personagens || []).length}</span>
                                 </div>
                             </div>
-                            <span class="block text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border inline-block truncate max-w-full"><strong>Chars:</strong> ${localCharsStr}</span>
                             <span class="block text-[10px] text-slate-400 font-medium pt-1"><strong>Modificado:</strong> ${localDateStr}</span>
                         </div>
                     </label>
                     
                     <!-- OPÇÃO B: IMPORTADO -->
-                    <label class="relative cursor-pointer border-2 rounded-xl p-4 flex flex-col justify-between transition-all hover:border-indigo-300 shadow-sm ${cardImportActive}">
-                        <input type="radio" name="conflict-${index}" value="import" class="absolute bottom-4 right-4 w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500" ${importadaRecomendada ? 'checked' : ''} />
+                    <label id="card-import-${index}" onclick="selecionarOpcaoConflito(${index}, 'import')" class="relative cursor-pointer border-2 rounded-xl p-4 flex flex-col justify-between transition-all hover:border-indigo-300 shadow-sm ${cardImportActive}">
+                        <input type="radio" id="input-import-${index}" name="conflict-${index}" value="import" class="absolute bottom-4 right-4 w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500" ${importadaRecomendada ? 'checked' : ''} />
                         ${badgeImport}
                         <div class="space-y-2 pr-6">
                             <span class="block text-xs font-extrabold uppercase text-slate-500 tracking-wider">Dados Importados (Do Código)</span>
                             <div class="flex items-center gap-4 py-1">
                                 <div>
                                     <span class="block text-[10px] text-slate-400 font-bold uppercase">Moedas</span>
-                                    <span class="text-lg font-black text-yellow-600 flex items-center gap-1">${importada.moedas} <i class="fa-solid fa-coins text-sm"></i></span>
+                                    <span class="text-lg font-black text-yellow-600 flex items-center gap-1">${importada.moedas}${diffMoedasImportStr} <i class="fa-solid fa-coins text-sm"></i></span>
                                 </div>
                                 <div class="border-l border-slate-200 pl-4">
                                     <span class="block text-[10px] text-slate-400 font-bold uppercase">Personagens</span>
                                     <span class="text-lg font-black text-slate-700">${(importada.personagens || []).length}</span>
                                 </div>
                             </div>
-                            <span class="block text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border inline-block truncate max-w-full"><strong>Chars:</strong> ${importadaCharsStr}</span>
                             <span class="block text-[10px] text-slate-400 font-medium pt-1"><strong>Modificado:</strong> ${importDateStr}</span>
                         </div>
                     </label>
+                </div>
+
+                <!-- Detalhes de comparação de personagens -->
+                <div class="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <p class="text-xs font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><i class="fa-solid fa-code-compare text-indigo-500"></i> Comparação de Personagens e Alterações</p>
+                    ${comparacaoPersonagensHtml}
                 </div>
             </div>
         `;
