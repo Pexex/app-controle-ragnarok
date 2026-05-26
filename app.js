@@ -97,6 +97,7 @@ let appState = {
 let eventosDisponiveis = []; // Eventos carregados do arquivo eventos.json
 let eventoSelecionadoId = null;
 let eventoDetalheAba = 'overview';
+let tempImportedData = null;
 
 const itensLoja = [
     // Consumíveis
@@ -220,15 +221,23 @@ function mudarSubAba(subAbaId, updateNav = true) {
 }
 
 // --- FUNÇÕES DE DADOS (CONTAS E CHARS) ---
+function atualizarDataConta(email) {
+    if (!email) return;
+    const conta = appState.contas.find(c => c.email.toLowerCase() === email.toLowerCase());
+    if (conta) {
+        conta.lastUpdated = new Date().toISOString();
+    }
+}
+
 function adicionarConta() {
     const email = document.getElementById('novo-email').value.trim();
     if(!email) return mostrarToast('Digite um e-mail.', 'error');
     
-    if(appState.contas.some(c => c.email === email)) {
+    if(appState.contas.some(c => c.email.toLowerCase() === email.toLowerCase())) {
         return mostrarToast('Conta já cadastrada.', 'error');
     }
 
-    appState.contas.push({ email, moedas: 0, personagens: [] });
+    appState.contas.push({ email, moedas: 0, personagens: [], lastUpdated: new Date().toISOString() });
     document.getElementById('novo-email').value = '';
     
     salvarDados();
@@ -241,6 +250,7 @@ function removerPersonagem(email, idChar) {
     let conta = appState.contas.find(c => c.email === email);
     if(conta) {
         conta.personagens = conta.personagens.filter(p => p.id !== idChar);
+        atualizarDataConta(email);
         salvarDados();
         renderizarContas();
         manterGruposConsistentes();
@@ -498,6 +508,7 @@ function confirmarAdicionarPersonagem() {
         battlePassLevel: battlePass ? battlePassLevel : 1
     });
 
+    atualizarDataConta(email);
     salvarDados();
     renderizarContas();
     fecharModalCriar();
@@ -525,6 +536,7 @@ function alterarNivelRapido(email, idChar, delta, tipo = 'base') {
                     return mostrarToast('Job deve ser entre 1 e 80.', 'error');
                 }
             }
+            atualizarDataConta(email);
             salvarDados();
             renderizarContas();
             manterGruposConsistentes();
@@ -613,6 +625,7 @@ function salvarEdicaoModal() {
             char.boosterEvento = document.getElementById('edit-char-booster').checked;
             char.battlePass = battlePass;
             char.battlePassLevel = battlePass ? battlePassLevel : 1;
+            atualizarDataConta(email);
             salvarDados();
             renderizarContas();
             fecharModalEditar();
@@ -1158,6 +1171,7 @@ function marcarInstanciaFeita(instName, groupIdx = null) {
                     const c = appState.contas.find(x => x.email === email);
                     if (c) {
                         c.moedas = (c.moedas || 0) + moedasPorConta;
+                        atualizarDataConta(email);
                         registrarNoHistorico(email, `Auto Farm: ${instName} (${grupoName})`, moedasPorConta);
                     }
                 });
@@ -1193,6 +1207,7 @@ function marcarInstanciaFeita(instName, groupIdx = null) {
                 const c = appState.contas.find(x => x.email === email);
                 if (c) {
                     c.moedas = (c.moedas || 0) + moedasPorConta;
+                    atualizarDataConta(email);
                     registrarNoHistorico(email, `Auto Farm: ${instName} (${grupoName})`, moedasPorConta);
                 }
             });
@@ -1253,6 +1268,7 @@ function registrarFarmGrupo() {
         let c = appState.contas.find(x => x.email === email);
         if(c) {
             c.moedas += moedas;
+            atualizarDataConta(email);
             registrarNoHistorico(email, `Farm: ${instName} (Grupo ${parseInt(idx)+1})`, moedas);
         }
     });
@@ -1289,6 +1305,7 @@ function ajustarMoedasManual(adicionar) {
     if(!adicionar && c.moedas < valor) return mostrarToast('Saldo insuficiente nesta conta!', 'error');
 
     c.moedas += diff;
+    atualizarDataConta(email);
     let operacao = adicionar ? `Entrada: ${desc}` : `Saída: ${desc}`;
     registrarNoHistorico(email, operacao, diff);
 
@@ -1417,6 +1434,7 @@ function comprarItemLoja(idxOriginalItem) {
     }
 
     c.moedas -= item.custo;
+    atualizarDataConta(email);
     registrarNoHistorico(email, `Resgate na Loja: ${item.nome}`, -item.custo);
     
     salvarDados();
@@ -1475,27 +1493,322 @@ function copiarDados() {
     mostrarToast('Código copiado! Cole no seu WhatsApp ou Bloco de Notas.');
 }
 
+function limparCampoJson() {
+    document.getElementById('json-dados').value = '';
+    mostrarToast('Campo de texto limpo.');
+}
+
+async function colarDoClipboard() {
+    try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('json-dados').value = text;
+        mostrarToast('Dados colados com sucesso!');
+    } catch (err) {
+        mostrarToast('Por favor, cole manualmente usando Ctrl+V ou toque e segure.', 'info');
+    }
+}
+
+function fecharModalImport() {
+    document.getElementById('modal-confirmar-import').classList.add('hidden');
+}
+
+function fecharModalConflitos() {
+    document.getElementById('modal-conflitos-import').classList.add('hidden');
+}
+
+function mesclarHistorico(importado) {
+    appState.historico = appState.historico || [];
+    const novoHistorico = [...appState.historico, ...importado];
+    
+    // Filtra duplicados exatos por stringify de data+email+desc+valor
+    const vistos = new Set();
+    const filtrado = [];
+    
+    novoHistorico.forEach(h => {
+        const chave = `${h.data || ''}|${h.email || ''}|${h.desc || ''}|${h.valor || 0}`;
+        if (!vistos.has(chave)) {
+            vistos.add(chave);
+            filtrado.push(h);
+        }
+    });
+    
+    // Limita a 50 itens
+    appState.historico = filtrado.slice(0, 50);
+}
+
+function mesclarEventos(importados) {
+    appState.eventos = appState.eventos || [];
+    
+    importados.forEach(evtImportado => {
+        let existente = appState.eventos.find(e => e.id === evtImportado.id);
+        if (!existente) {
+            appState.eventos.push(evtImportado);
+        } else {
+            // Mescla personagensEvento
+            existente.personagensEvento = existente.personagensEvento || {};
+            evtImportado.personagensEvento = evtImportado.personagensEvento || {};
+            
+            for (const [charId, qtd] of Object.entries(evtImportado.personagensEvento)) {
+                // Pegamos a quantidade máxima registrada para o personagem para evitar duplicidade de farm
+                existente.personagensEvento[charId] = Math.max(existente.personagensEvento[charId] || 0, qtd);
+            }
+        }
+    });
+}
+
+function renderizarConflitosImportacao(emailsConflito, contasLocais, contasImportadas) {
+    const container = document.getElementById('lista-conflitos-contas');
+    container.innerHTML = '';
+    
+    emailsConflito.forEach((email, index) => {
+        const local = contasLocais.find(c => c.email.toLowerCase() === email);
+        const importada = contasImportadas.find(c => c.email.toLowerCase() === email);
+        
+        const localCharsStr = (local.personagens || []).map(p => `${p.nome} (Nv ${p.level} ${p.classe})`).join(', ') || 'Nenhum';
+        const importadaCharsStr = (importada.personagens || []).map(p => `${p.nome} (Nv ${p.level} ${p.classe})`).join(', ') || 'Nenhum';
+        
+        const localDateStr = local.lastUpdated ? new Date(local.lastUpdated).toLocaleString('pt-BR') : 'Sem data';
+        const importDateStr = importada.lastUpdated ? new Date(importada.lastUpdated).toLocaleString('pt-BR') : 'Sem data';
+        
+        // Determinar qual é o mais recente
+        let localRecomendado = false;
+        let importadaRecomendada = false;
+        
+        if (local.lastUpdated && importada.lastUpdated) {
+            if (new Date(local.lastUpdated) >= new Date(importada.lastUpdated)) {
+                localRecomendado = true;
+            } else {
+                importadaRecomendada = true;
+            }
+        } else if (local.lastUpdated) {
+            localRecomendado = true;
+        } else if (importada.lastUpdated) {
+            importadaRecomendada = true;
+        } else {
+            // Se nenhuma tiver data, recomenda a local por segurança
+            localRecomendado = true;
+        }
+        
+        const cardLocalActive = localRecomendado ? 'border-indigo-400 bg-indigo-50/50' : 'border-slate-200 bg-white';
+        const cardImportActive = importadaRecomendada ? 'border-indigo-400 bg-indigo-50/50' : 'border-slate-200 bg-white';
+        
+        const badgeLocal = localRecomendado ? '<span class="absolute top-3 right-3 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow"><i class="fa-solid fa-star text-[8px]"></i> Recomendado</span>' : '';
+        const badgeImport = importadaRecomendada ? '<span class="absolute top-3 right-3 bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow"><i class="fa-solid fa-star text-[8px]"></i> Recomendado</span>' : '';
+
+        const html = `
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-envelope text-indigo-500 mr-2"></i>Conta: ${local.email}</h3>
+                    <span class="text-xs font-semibold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg">Conflito de Redundância</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- OPÇÃO A: LOCAL -->
+                    <label class="relative cursor-pointer border-2 rounded-xl p-4 flex flex-col justify-between transition-all hover:border-indigo-300 shadow-sm ${cardLocalActive}">
+                        <input type="radio" name="conflict-${index}" value="local" class="absolute bottom-4 right-4 w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500" ${localRecomendado ? 'checked' : ''} />
+                        ${badgeLocal}
+                        <div class="space-y-2 pr-6">
+                            <span class="block text-xs font-extrabold uppercase text-slate-500 tracking-wider">Dispositivo Local (Dados Atuais)</span>
+                            <div class="flex items-center gap-4 py-1">
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase">Moedas</span>
+                                    <span class="text-lg font-black text-yellow-600 flex items-center gap-1">${local.moedas} <i class="fa-solid fa-coins text-sm"></i></span>
+                                </div>
+                                <div class="border-l border-slate-200 pl-4">
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase">Personagens</span>
+                                    <span class="text-lg font-black text-slate-700">${(local.personagens || []).length}</span>
+                                </div>
+                            </div>
+                            <span class="block text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border inline-block truncate max-w-full"><strong>Chars:</strong> ${localCharsStr}</span>
+                            <span class="block text-[10px] text-slate-400 font-medium pt-1"><strong>Modificado:</strong> ${localDateStr}</span>
+                        </div>
+                    </label>
+                    
+                    <!-- OPÇÃO B: IMPORTADO -->
+                    <label class="relative cursor-pointer border-2 rounded-xl p-4 flex flex-col justify-between transition-all hover:border-indigo-300 shadow-sm ${cardImportActive}">
+                        <input type="radio" name="conflict-${index}" value="import" class="absolute bottom-4 right-4 w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500" ${importadaRecomendada ? 'checked' : ''} />
+                        ${badgeImport}
+                        <div class="space-y-2 pr-6">
+                            <span class="block text-xs font-extrabold uppercase text-slate-500 tracking-wider">Dados Importados (Do Código)</span>
+                            <div class="flex items-center gap-4 py-1">
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase">Moedas</span>
+                                    <span class="text-lg font-black text-yellow-600 flex items-center gap-1">${importada.moedas} <i class="fa-solid fa-coins text-sm"></i></span>
+                                </div>
+                                <div class="border-l border-slate-200 pl-4">
+                                    <span class="block text-[10px] text-slate-400 font-bold uppercase">Personagens</span>
+                                    <span class="text-lg font-black text-slate-700">${(importada.personagens || []).length}</span>
+                                </div>
+                            </div>
+                            <span class="block text-[10px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border inline-block truncate max-w-full"><strong>Chars:</strong> ${importadaCharsStr}</span>
+                            <span class="block text-[10px] text-slate-400 font-medium pt-1"><strong>Modificado:</strong> ${importDateStr}</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        `;
+        container.innerHTML += html;
+    });
+    
+    container.dataset.emails = JSON.stringify(emailsConflito);
+}
+
 function importarDados() {
-    let txt = document.getElementById('json-dados').value;
+    let txt = document.getElementById('json-dados').value.trim();
+    if(!txt) {
+        return mostrarToast('Por favor, insira o código JSON antes de importar.', 'error');
+    }
+
     try {
         let obj = JSON.parse(txt);
         if(obj.contas) {
-            appState.contas = obj.contas;
-            appState.historico = obj.historico || [];
-            appState.eventos = obj.eventos || [];
-            appState.gruposAtuais = [];
-            salvarDados();
-            atualizarSelectsContas();
-            renderizarContas();
-            renderizarHistorico();
-            renderizarEventos();
-            mostrarToast('Dados importados com sucesso!');
+            // Validação de redundância total
+            const currentData = JSON.stringify({
+                contas: appState.contas,
+                historico: appState.historico,
+                eventos: appState.eventos
+            }, null, 2);
+            
+            if (txt === currentData.trim()) {
+                return mostrarToast('Os dados informados são idênticos aos dados atuais deste dispositivo.', 'info');
+            }
+
+            if(appState.contas.length > 0) {
+                tempImportedData = obj;
+                document.getElementById('import-qtd-atuais').innerText = appState.contas.length;
+                document.getElementById('import-qtd-novas').innerText = obj.contas.length;
+                document.getElementById('modal-confirmar-import').classList.remove('hidden');
+            } else {
+                appState.contas = obj.contas;
+                appState.historico = obj.historico || [];
+                appState.eventos = obj.eventos || [];
+                appState.gruposAtuais = [];
+                salvarDados();
+                atualizarSelectsContas();
+                renderizarContas();
+                renderizarHistorico();
+                renderizarEventos();
+                mostrarToast('Dados importados com sucesso!');
+            }
         } else {
             mostrarToast('Formato de dados inválido.', 'error');
         }
     } catch(e) {
         mostrarToast('Erro ao ler os dados. Verifique se o código está correto.', 'error');
     }
+}
+
+function confirmarImportacao(modo) {
+    fecharModalImport();
+    
+    if(!tempImportedData) {
+        return mostrarToast('Erro: Nenhum dado importado disponível.', 'error');
+    }
+
+    if(modo === 'substituir') {
+        appState.contas = tempImportedData.contas;
+        appState.historico = tempImportedData.historico || [];
+        appState.eventos = tempImportedData.eventos || [];
+        appState.gruposAtuais = [];
+        tempImportedData = null;
+        salvarDados();
+        atualizarSelectsContas();
+        renderizarContas();
+        renderizarHistorico();
+        renderizarEventos();
+        mostrarToast('Dados substituídos com sucesso!');
+    } else if(modo === 'mesclar') {
+        const contasLocais = appState.contas;
+        const contasImportadas = tempImportedData.contas;
+        
+        const contasLocaisEmails = new Set(contasLocais.map(c => c.email.toLowerCase()));
+        const contasImportadasEmails = new Set(contasImportadas.map(c => c.email.toLowerCase()));
+        
+        const emailsConflito = [...contasLocaisEmails].filter(email => contasImportadasEmails.has(email));
+        
+        if (emailsConflito.length === 0) {
+            // Sem conflitos!
+            appState.contas = [
+                ...contasLocais,
+                ...contasImportadas
+            ];
+            mesclarHistorico(tempImportedData.historico || []);
+            mesclarEventos(tempImportedData.eventos || []);
+            tempImportedData = null;
+            salvarDados();
+            atualizarSelectsContas();
+            renderizarContas();
+            renderizarHistorico();
+            renderizarEventos();
+            mostrarToast('Dados mesclados com sucesso!');
+        } else {
+            // Há conflitos! Exibe o modal de resolução
+            renderizarConflitosImportacao(emailsConflito, contasLocais, contasImportadas);
+            document.getElementById('modal-conflitos-import').classList.remove('hidden');
+        }
+    }
+}
+
+function finalizarMesclagemComConflitos() {
+    const container = document.getElementById('lista-conflitos-contas');
+    const emailsConflito = JSON.parse(container.dataset.emails || '[]');
+    
+    if (!tempImportedData) {
+        fecharModalConflitos();
+        return mostrarToast('Nenhum dado importado disponível.', 'error');
+    }
+    
+    const contasLocais = appState.contas;
+    const contasImportadas = tempImportedData.contas;
+    
+    const contasResolvidas = [];
+    
+    // 1. Processar contas em conflito com base na escolha do usuário
+    for (let i = 0; i < emailsConflito.length; i++) {
+        const email = emailsConflito[i];
+        const selectedOption = document.querySelector(`input[name="conflict-${i}"]:checked`).value;
+        
+        if (selectedOption === 'local') {
+            const localAccount = contasLocais.find(c => c.email.toLowerCase() === email);
+            contasResolvidas.push(localAccount);
+        } else {
+            const importedAccount = contasImportadas.find(c => c.email.toLowerCase() === email);
+            contasResolvidas.push(importedAccount);
+        }
+    }
+    
+    // 2. Adicionar contas locais sem conflito
+    const emailsConflitoSet = new Set(emailsConflito);
+    contasLocais.forEach(c => {
+        if (!emailsConflitoSet.has(c.email.toLowerCase())) {
+            contasResolvidas.push(c);
+        }
+    });
+    
+    // 3. Adicionar contas importadas sem conflito
+    contasImportadas.forEach(c => {
+        if (!emailsConflitoSet.has(c.email.toLowerCase())) {
+            contasResolvidas.push(c);
+        }
+    });
+    
+    // 4. Salvar as contas resolvidas
+    appState.contas = contasResolvidas;
+    
+    // 5. Mesclar histórico e eventos
+    mesclarHistorico(tempImportedData.historico || []);
+    mesclarEventos(tempImportedData.eventos || []);
+    
+    tempImportedData = null;
+    fecharModalConflitos();
+    
+    salvarDados();
+    atualizarSelectsContas();
+    renderizarContas();
+    renderizarHistorico();
+    renderizarEventos();
+    
+    mostrarToast('Contas mescladas e conflitos resolvidos com sucesso!');
 }
 
 function limparTudo() {
@@ -2427,6 +2740,7 @@ function registrarFarmRapido(eventoId, charId = null) {
             if(!conta.moedasEventos[eventoId]) conta.moedasEventos[eventoId] = 0;
             
             conta.moedasEventos[eventoId] += qtd;
+            atualizarDataConta(contaEmail);
             salvarDados();
             renderizarContas();
         }
@@ -2470,6 +2784,7 @@ function ajustarFarmEvento(eventoId, charId, delta) {
             if(conta.moedasEventos[eventoId] <= 0) {
                 delete conta.moedasEventos[eventoId];
             }
+            atualizarDataConta(contaEmail);
         }
     }
 
@@ -2531,6 +2846,7 @@ function comprarItem(eventoId, itemIndex) {
                 }
             }
             if(contaEmail) registrarNoHistorico(contaEmail, `Compra na loja do evento: ${item.nome} (${eventoModelo.nome}) — ${registroNome}`, -custo);
+            if(contaEmail) atualizarDataConta(contaEmail);
 
             salvarDados();
             renderizarEventoDetalhe();
@@ -2574,6 +2890,7 @@ function removerFarmEvento(eventoId, charId) {
                 if(conta.moedasEventos[eventoId] <= 0) {
                     delete conta.moedasEventos[eventoId];
                 }
+                atualizarDataConta(contaEmail);
             }
         }
         
