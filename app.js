@@ -267,6 +267,45 @@ function removerConta(email) {
     mostrarToast('Conta removida.');
 }
 
+function moverConta(email, direcao) {
+    const index = appState.contas.findIndex(c => c.email.toLowerCase() === email.toLowerCase());
+    if (index === -1) return;
+    
+    const novoIndex = index + direcao;
+    if (novoIndex < 0 || novoIndex >= appState.contas.length) return;
+    
+    // Trocar de posição no array
+    const temp = appState.contas[index];
+    appState.contas[index] = appState.contas[novoIndex];
+    appState.contas[novoIndex] = temp;
+    
+    salvarDados();
+    atualizarSelectsContas();
+    renderizarContas();
+    mostrarToast('Ordem das contas atualizada com sucesso!');
+}
+
+function moverPersonagem(email, idChar, direcao) {
+    const conta = appState.contas.find(c => c.email.toLowerCase() === email.toLowerCase());
+    if (!conta) return;
+    
+    const index = conta.personagens.findIndex(p => p.id === idChar);
+    if (index === -1) return;
+    
+    const novoIndex = index + direcao;
+    if (novoIndex < 0 || novoIndex >= conta.personagens.length) return;
+    
+    // Trocar de posição no array de personagens
+    const temp = conta.personagens[index];
+    conta.personagens[index] = conta.personagens[novoIndex];
+    conta.personagens[novoIndex] = temp;
+    
+    atualizarDataConta(email);
+    salvarDados();
+    renderizarContas();
+    mostrarToast('Ordem dos personagens atualizada com sucesso!');
+}
+
 // --- SISTEMA DE CRIAÇÃO ESTILO RO (NOVO) ---
 function obterCoresClasseImg(classeName) {
     const n = classeName.toLowerCase();
@@ -731,10 +770,16 @@ function renderizarContas() {
                         </div>
                     </div>
                     <div class="flex gap-1 pt-1">
+                        <button onclick="moverPersonagem('${conta.email}', '${p.id}', -1)" class="px-2 bg-white border border-slate-300 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 text-slate-600 text-[10px] font-bold py-1 rounded transition-colors shadow-sm flex items-center justify-center" title="Mover para esquerda">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
                         <button onclick="abrirModalEditar('${conta.email}', '${p.id}')" class="flex-1 bg-white border border-slate-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 text-slate-600 text-[10px] font-bold py-1 rounded transition-colors shadow-sm flex items-center justify-center gap-1">
                             <i class="fa-solid fa-pen"></i> Editar
                         </button>
-                        <button onclick="removerPersonagem('${conta.email}', '${p.id}')" class="px-2.5 bg-white border border-slate-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-slate-600 text-[10px] font-bold py-1 rounded transition-colors shadow-sm">
+                        <button onclick="moverPersonagem('${conta.email}', '${p.id}', 1)" class="px-2 bg-white border border-slate-300 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 text-slate-600 text-[10px] font-bold py-1 rounded transition-colors shadow-sm flex items-center justify-center" title="Mover para direita">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button onclick="removerPersonagem('${conta.email}', '${p.id}')" class="px-2.5 bg-white border border-slate-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-slate-600 text-[10px] font-bold py-1 rounded transition-colors shadow-sm flex items-center justify-center" title="Excluir">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -767,22 +812,35 @@ function renderizarContas() {
         let box = document.createElement('div');
         box.className = 'border border-blue-200 rounded-xl p-5 mb-6 shadow-md relative overflow-hidden bg-white/80 backdrop-blur-sm';
         box.innerHTML = `
-            <button onclick="removerConta('${conta.email}')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors z-10 bg-white p-2 rounded-lg shadow-sm border border-slate-200 hover:border-red-200" title="Remover Conta">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-            
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-blue-200 pb-4 pr-12">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 border-b border-blue-200 pb-4 gap-4">
                 <div>
                     <h3 class="font-bold text-xl text-slate-700 flex items-center gap-2">
                         <i class="fa-solid fa-desktop text-indigo-500"></i> ${conta.email}
                     </h3>
                     <span class="text-sm text-slate-500 font-medium">Slots Ocupados: ${conta.personagens.length}</span>
                 </div>
-                <div class="mt-3 md:mt-0 bg-blue-50 px-4 py-2 rounded-xl shadow-inner border border-blue-100 flex items-center gap-3">
-                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Moedas (Conta)</span>
-                    <span class="text-xl font-black text-yellow-600 flex items-center gap-1 drop-shadow-sm">
-                        ${conta.moedas} <i class="fa-solid fa-coins text-sm"></i>
-                    </span>
+                
+                <div class="flex items-center gap-3 mt-3 md:mt-0 self-end md:self-auto shrink-0">
+                    <!-- Moedas counter -->
+                    <div class="bg-blue-50 px-4 py-2 rounded-xl shadow-inner border border-blue-100 flex items-center gap-3">
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Moedas (Conta)</span>
+                        <span class="text-xl font-black text-yellow-600 flex items-center gap-1 drop-shadow-sm">
+                            ${conta.moedas} <i class="fa-solid fa-coins text-sm"></i>
+                        </span>
+                    </div>
+                    
+                    <!-- Controls (Up, Down, Trash) -->
+                    <div class="flex gap-1">
+                        <button onclick="moverConta('${conta.email}', -1)" class="text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center justify-center w-9 h-9" title="Mover para cima">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                        <button onclick="moverConta('${conta.email}', 1)" class="text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center justify-center w-9 h-9" title="Mover para baixo">
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </button>
+                        <button onclick="removerConta('${conta.email}')" class="text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center justify-center w-9 h-9" title="Remover Conta">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -1779,6 +1837,180 @@ function renderizarConflitosImportacao(emailsConflito, contasLocais, contasImpor
     container.dataset.emails = JSON.stringify(emailsConflito);
 }
 
+function gerarRelatorioPreMerge(contasLocais, contasImportadas) {
+    const container = document.getElementById('analise-merge-detalhes');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const localEmails = contasLocais.map(c => c.email.toLowerCase());
+    const importEmails = contasImportadas.map(c => c.email.toLowerCase());
+
+    const emailsLocaisSet = new Set(localEmails);
+    const emailsImportadosSet = new Set(importEmails);
+
+    // Grupos
+    const adicionadas = contasImportadas.filter(c => !emailsLocaisSet.has(c.email.toLowerCase()));
+    const preservadas = contasLocais.filter(c => !emailsImportadosSet.has(c.email.toLowerCase()));
+    const conflitos = [];
+
+    contasLocais.forEach(local => {
+        const importada = contasImportadas.find(c => c.email.toLowerCase() === local.email.toLowerCase());
+        if (importada) {
+            conflitos.push({ local, importada });
+        }
+    });
+
+    let html = '';
+
+    // 1. Processar Contas Adicionadas [+]
+    if (adicionadas.length > 0) {
+        adicionadas.forEach(conta => {
+            const chars = conta.personagens || [];
+            const listHtml = chars.map(p => `<li>${p.nome} (Nv ${p.level} · ${p.classe})</li>`).join('');
+            html += `
+                <div class="border-l-4 border-green-500 bg-green-50/50 p-3 rounded-r-xl space-y-1.5 shadow-sm">
+                    <div class="font-extrabold text-green-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus-circle text-sm"></i> [+] ADICIONAR: ${conta.email}
+                    </div>
+                    <div class="pl-4 text-[11px] text-slate-600 space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <i class="fa-solid fa-coins"></i> ${conta.moedas || 0} Moedas
+                            </span>
+                            <span class="font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                                <i class="fa-solid fa-users"></i> ${chars.length} Personagem(ns)
+                            </span>
+                        </div>
+                        ${chars.length > 0 ? `<ul class="list-disc pl-4 text-slate-500 space-y-0.5 mt-1 font-sans text-[10px]">${listHtml}</ul>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // 2. Processar Contas em Conflito [~]
+    if (conflitos.length > 0) {
+        conflitos.forEach(({ local, importada }) => {
+            const email = local.email;
+            
+            // Moedas Diff
+            let moedasDiffHtml = '';
+            const diffMoedas = (importada.moedas || 0) - (local.moedas || 0);
+            if (diffMoedas === 0) {
+                moedasDiffHtml = `<span class="text-slate-500 flex items-center gap-1"><i class="fa-solid fa-coins text-yellow-500 mr-1"></i> Moedas: <span class="font-bold text-slate-700">${local.moedas}</span> (Sem alterações)</span>`;
+            } else {
+                const sign = diffMoedas > 0 ? `+${diffMoedas}` : diffMoedas;
+                const diffColor = diffMoedas > 0 ? 'text-green-600 bg-green-50 border-green-200' : 'text-red-600 bg-red-50 border-red-200';
+                moedasDiffHtml = `
+                    <span class="flex items-center gap-1 text-slate-600">
+                        <i class="fa-solid fa-coins text-yellow-500 mr-1"></i> Moedas: 
+                        <span class="font-bold text-slate-500">${local.moedas}</span>
+                        <i class="fa-solid fa-arrow-right-long text-slate-400 text-[10px] mx-1"></i>
+                        <span class="font-bold text-slate-800">${importada.moedas}</span>
+                        <span class="font-black text-[10px] px-1.5 py-0.5 rounded border ${diffColor} font-sans ml-1">${sign}</span>
+                    </span>
+                `;
+            }
+
+            // Personagens Diff (Estilo Git Diff)
+            const localChars = local.personagens || [];
+            const importChars = importada.personagens || [];
+
+            const localNames = new Set(localChars.map(p => p.nome.toLowerCase()));
+            const importNames = new Set(importChars.map(p => p.nome.toLowerCase()));
+
+            const charDiffs = [];
+            let unchangedCount = 0;
+
+            // Removidos (estão no local mas não no importado)
+            localChars.forEach(p => {
+                if (!importNames.has(p.nome.toLowerCase())) {
+                    charDiffs.push(`<span class="text-red-400 block pl-2 font-mono whitespace-nowrap overflow-hidden text-ellipsis">- ${p.nome} (Nv ${p.level} · ${p.classe}) <span class="text-[9px] bg-red-950/80 text-red-300 border border-red-800 px-1.5 py-0.5 rounded font-sans ml-1 select-none">Removido na importação</span></span>`);
+                }
+            });
+
+            // Adicionados (estão no importado mas não no local)
+            importChars.forEach(p => {
+                if (!localNames.has(p.nome.toLowerCase())) {
+                    charDiffs.push(`<span class="text-green-400 block pl-2 font-mono whitespace-nowrap overflow-hidden text-ellipsis">+ ${p.nome} (Nv ${p.level} · ${p.classe}) <span class="text-[9px] bg-green-950/80 text-green-300 border border-green-800 px-1.5 py-0.5 rounded font-sans ml-1 select-none">Novo na importação</span></span>`);
+                }
+            });
+
+            // Modificados (estão em ambos mas com diferenças de level/classe/booster)
+            localChars.forEach(pLocal => {
+                const pImport = importChars.find(p => p.nome.toLowerCase() === pLocal.nome.toLowerCase());
+                if (pImport) {
+                    const levelChanged = pLocal.level !== pImport.level;
+                    const classChanged = pLocal.classe !== pImport.classe;
+
+                    if (levelChanged || classChanged) {
+                        let changes = [];
+                        if (levelChanged) {
+                            const diff = pImport.level - pLocal.level;
+                            const sign = diff > 0 ? `+${diff}` : diff;
+                            const diffColor = diff > 0 ? 'text-green-400 font-bold' : 'text-red-400 font-bold';
+                            changes.push(`Nível: ${pLocal.level} &rarr; <span class="${diffColor}">${pImport.level} (${sign})</span>`);
+                        }
+                        if (classChanged) {
+                            changes.push(`Classe: ${pLocal.classe} &rarr; <span class="text-indigo-300 font-bold">${pImport.classe}</span>`);
+                        }
+                        charDiffs.push(`<span class="text-amber-400 block pl-2 font-mono whitespace-nowrap overflow-hidden text-ellipsis">~ ${pLocal.nome}: ${changes.join(' | ')}</span>`);
+                    } else {
+                        unchangedCount++;
+                    }
+                }
+            });
+
+            let diffConsoleHtml = '';
+            if (charDiffs.length > 0 || unchangedCount > 0) {
+                let linesHtml = charDiffs.join('');
+                if (unchangedCount > 0) {
+                    linesHtml += `<span class="text-slate-400 block pl-2 font-mono select-none">  e ${unchangedCount} personagem(ns) idêntico(s) (omitido no diff)</span>`;
+                }
+                diffConsoleHtml = `
+                    <div class="mt-2">
+                        <span class="font-bold text-[10px] text-slate-700 block mb-1"><i class="fa-solid fa-gamepad text-slate-500 mr-1"></i> Git-Diff de Personagens:</span>
+                        <div class="bg-slate-900 text-slate-200 p-3 rounded-lg text-[10px] space-y-1 font-mono shadow-inner border border-slate-950 max-h-36 overflow-y-auto pr-1">
+                            ${linesHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="border-l-4 border-amber-500 bg-amber-50/50 p-3 rounded-r-xl space-y-1.5 shadow-sm relative">
+                    <div class="font-extrabold text-amber-800 flex justify-between items-center border-b border-amber-200 pb-1">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation text-sm text-amber-600 animate-pulse"></i> [~] CONFLITO: ${email}</span>
+                        <span class="text-[9px] bg-amber-100 border border-amber-200 text-amber-800 font-black px-1.5 py-0.5 rounded font-sans uppercase">Passo 2 Requerido</span>
+                    </div>
+                    <div class="pl-4 text-[11px] text-slate-600 space-y-1.5">
+                        ${moedasDiffHtml}
+                        ${diffConsoleHtml}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // 3. Processar Contas Preservadas [=]
+    if (preservadas.length > 0) {
+        preservadas.forEach(conta => {
+            html += `
+                <div class="border-l-4 border-slate-400 bg-slate-100/50 p-3 rounded-r-xl space-y-1 shadow-sm">
+                    <div class="font-extrabold text-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check text-sm text-slate-500"></i> [=] PRESERVAR: ${conta.email}
+                    </div>
+                    <div class="pl-4 text-[11px] text-slate-500">
+                        Esta conta existe apenas localmente neste dispositivo. Ela será **mantida intacta** sem nenhuma alteração. (${(conta.personagens || []).length} personagens, ${conta.moedas || 0} moedas).
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    container.innerHTML = html;
+}
+
 function importarDados() {
     let txt = document.getElementById('json-dados').value.trim();
     if(!txt) {
@@ -1803,6 +2035,7 @@ function importarDados() {
                 tempImportedData = obj;
                 document.getElementById('import-qtd-atuais').innerText = appState.contas.length;
                 document.getElementById('import-qtd-novas').innerText = obj.contas.length;
+                gerarRelatorioPreMerge(appState.contas, obj.contas);
                 document.getElementById('modal-confirmar-import').classList.remove('hidden');
             } else {
                 appState.contas = obj.contas;
