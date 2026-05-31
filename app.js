@@ -485,6 +485,11 @@ function focarNovoChar(email) {
 
 function fecharModalCriar() {
     document.getElementById('modal-criar-char').classList.add('hidden');
+    // Limpeza defensiva explícita dos campos
+    document.getElementById('novo-char-nome').value = '';
+    document.getElementById('novo-char-booster').checked = false;
+    document.getElementById('novo-char-arrancada').checked = false;
+    document.getElementById('novo-char-battlepass').checked = false;
 }
 
 function atualizarPreviewClasse(isEdit = false) {
