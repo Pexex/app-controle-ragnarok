@@ -475,6 +475,7 @@ function focarNovoChar(email) {
     document.getElementById('novo-char-classe').selectedIndex = 0;
     document.querySelector(`input[name="novo-char-genero"][value="M"]`).checked = true; // Reseta pro masculino
     document.getElementById('novo-char-booster').checked = false; // Resetar booster para novo personagem
+    document.getElementById('novo-char-arrancada').checked = false; // Resetar arrancada para novo personagem
     document.getElementById('novo-char-battlepass').checked = false;
     document.getElementById('novo-char-battlepass-level').value = '1';
     
@@ -525,6 +526,7 @@ function confirmarAdicionarPersonagem() {
     const job = parseInt(document.getElementById('novo-char-job').value);
     const genero = document.querySelector('input[name="novo-char-genero"]:checked').value;
     const boosterEvento = document.getElementById('novo-char-booster').checked;
+    const arrancadaEvento = document.getElementById('novo-char-arrancada').checked;
     const battlePass = document.getElementById('novo-char-battlepass').checked;
     const battlePassLevel = parseInt(document.getElementById('novo-char-battlepass-level').value) || 1;
 
@@ -543,6 +545,7 @@ function confirmarAdicionarPersonagem() {
         jobLevel: job,
         genero: genero,
         boosterEvento: boosterEvento,
+        arrancadaEvento: arrancadaEvento,
         battlePass: battlePass,
         battlePassLevel: battlePass ? battlePassLevel : 1
     });
@@ -603,6 +606,7 @@ function abrirModalEditar(email, idChar) {
     document.getElementById('edit-char-classe').innerHTML = document.getElementById('novo-char-classe').innerHTML;
     document.getElementById('edit-char-classe').value = char.classe;
     document.getElementById('edit-char-booster').checked = !!char.boosterEvento;
+    document.getElementById('edit-char-arrancada').checked = !!char.arrancadaEvento;
     document.getElementById('edit-char-battlepass').checked = !!char.battlePass;
     document.getElementById('edit-char-battlepass-level').value = char.battlePassLevel || 1;
 
@@ -662,6 +666,7 @@ function salvarEdicaoModal() {
             char.classe = novaClasse;
             char.genero = novoGenero;
             char.boosterEvento = document.getElementById('edit-char-booster').checked;
+            char.arrancadaEvento = document.getElementById('edit-char-arrancada').checked;
             char.battlePass = battlePass;
             char.battlePassLevel = battlePass ? battlePassLevel : 1;
             atualizarDataConta(email);
@@ -715,6 +720,7 @@ function renderizarContas() {
             let gen = p.genero || 'M'; // Fallback para chars velhos
             let iconeGen = gen === 'M' ? '<i class="fa-solid fa-mars text-blue-500 drop-shadow-sm ml-1 text-xs"></i>' : '<i class="fa-solid fa-venus text-pink-500 drop-shadow-sm ml-1 text-xs"></i>';
             let boosterBadge = p.boosterEvento ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">Booster</span>' : '';
+            let arrancadaBadge = p.arrancadaEvento ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700 border border-orange-200">Arrancada</span>' : '';
             let battlePassBadge = p.battlePass ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">Passe NV ${p.battlePassLevel || 1}</span>` : '';
             
             // Usar o mesmo mapeamento para arquivos de emblema
@@ -740,6 +746,7 @@ function renderizarContas() {
                 <!-- Ícone de Classe (Canto Superior Direito) + Badge Booster -->
                 <div class="absolute top-3 left-3 flex flex-col items-start gap-1 z-20">
                     ${boosterBadge ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200 shadow-sm">Booster</span>` : ''}
+                    ${arrancadaBadge ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700 border border-orange-200 shadow-sm">Arrancada</span>` : ''}
                     ${battlePassBadge ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm">Passe NV ${p.battlePassLevel || 1}</span>` : ''}
                 </div>
                 <div class="absolute top-3 right-3 z-20">
@@ -1669,9 +1676,10 @@ function gerarHtmlComparacaoPersonagens(localChars, importChars) {
             
             const levelChanged = pLocal.level !== pImport.level;
             const classChanged = pLocal.classe !== pImport.classe;
-            const boosterChanged = pLocal.boosterEvento !== pImport.boosterEvento;
+            const boosterChanged = !!pLocal.boosterEvento !== !!pImport.boosterEvento;
+            const arrancadaChanged = !!pLocal.arrancadaEvento !== !!pImport.arrancadaEvento;
             
-            if (levelChanged || classChanged || boosterChanged) {
+            if (levelChanged || classChanged || boosterChanged || arrancadaChanged) {
                 rowClass = 'bg-amber-50/30 hover:bg-amber-50';
                 
                 // Nível
@@ -1688,8 +1696,13 @@ function gerarHtmlComparacaoPersonagens(localChars, importChars) {
                 const localClass = classChanged ? `<span class="text-slate-400 text-[10px]">${pLocal.classe}</span>` : pLocal.classe;
                 const importClass = classChanged ? `<span class="text-indigo-600 text-[10px] font-bold">${pImport.classe}</span>` : pImport.classe;
                 
-                localStatus = `Nv ${localLvl} · ${localClass}`;
-                importStatus = `Nv ${importLvl} · ${importClass}`;
+                const localBoosterStr = pLocal.boosterEvento ? ' (B)' : '';
+                const importBoosterStr = pImport.boosterEvento ? ' (B)' : '';
+                const localArrancadaStr = pLocal.arrancadaEvento ? ' (A)' : '';
+                const importArrancadaStr = pImport.arrancadaEvento ? ' (A)' : '';
+                
+                localStatus = `Nv ${localLvl} · ${localClass}${localBoosterStr}${localArrancadaStr}`;
+                importStatus = `Nv ${importLvl} · ${importClass}${importBoosterStr}${importArrancadaStr}`;
             } else {
                 localStatus = `Nv ${pLocal.level} · ${pLocal.classe}`;
                 importStatus = `Nv ${pImport.level} · ${pImport.classe}`;
@@ -1942,8 +1955,11 @@ function gerarRelatorioPreMerge(contasLocais, contasImportadas) {
                 if (pImport) {
                     const levelChanged = pLocal.level !== pImport.level;
                     const classChanged = pLocal.classe !== pImport.classe;
+                    const boosterChanged = !!pLocal.boosterEvento !== !!pImport.boosterEvento;
+                    const arrancadaChanged = !!pLocal.arrancadaEvento !== !!pImport.arrancadaEvento;
+                    const battlePassChanged = !!pLocal.battlePass !== !!pImport.battlePass || pLocal.battlePassLevel !== pImport.battlePassLevel;
 
-                    if (levelChanged || classChanged) {
+                    if (levelChanged || classChanged || boosterChanged || arrancadaChanged || battlePassChanged) {
                         let changes = [];
                         if (levelChanged) {
                             const diff = pImport.level - pLocal.level;
@@ -1953,6 +1969,15 @@ function gerarRelatorioPreMerge(contasLocais, contasImportadas) {
                         }
                         if (classChanged) {
                             changes.push(`Classe: ${pLocal.classe} &rarr; <span class="text-indigo-300 font-bold">${pImport.classe}</span>`);
+                        }
+                        if (boosterChanged) {
+                            changes.push(`Booster: ${pLocal.boosterEvento ? 'Sim' : 'Não'} &rarr; <span class="text-indigo-300 font-bold">${pImport.boosterEvento ? 'Sim' : 'Não'}</span>`);
+                        }
+                        if (arrancadaChanged) {
+                            changes.push(`Arrancada: ${pLocal.arrancadaEvento ? 'Sim' : 'Não'} &rarr; <span class="text-indigo-300 font-bold">${pImport.arrancadaEvento ? 'Sim' : 'Não'}</span>`);
+                        }
+                        if (battlePassChanged) {
+                            changes.push(`Passe: ${pLocal.battlePass ? `Nv ${pLocal.battlePassLevel}` : 'Não'} &rarr; <span class="text-indigo-300 font-bold">${pImport.battlePass ? `Nv ${pImport.battlePassLevel}` : 'Não'}</span>`);
                         }
                         charDiffs.push(`<span class="text-amber-400 block pl-2 font-mono whitespace-nowrap overflow-hidden text-ellipsis">~ ${pLocal.nome}: ${changes.join(' | ')}</span>`);
                     } else {
