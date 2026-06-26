@@ -337,6 +337,21 @@ function obterFallbackImagemClasse(classeName, genero = 'M') {
 
 // Mapa de classes para nomes de arquivo de sprite corretos
 const mapearClasseParaArquivo = {
+    // 4th classes mappings
+    'Cavaleiro Draconiano': 'cavaleiro_draconiano',
+    'Guardião Imperial': 'guardiao_imperial',
+    'Magus': 'magus',
+    'Elementalista': 'elementalista',
+    'Falcão do Vento': 'falcao_do_vento',
+    'Maestro': 'maestro',
+    'Diva': 'diva',
+    'Mandraque': 'mandraque',
+    'Cientista': 'cientista',
+    'Executor': 'executor',
+    'Engenheiro': 'engenheiro',
+    'Cardeal': 'cardeal',
+    'Inquisidor': 'inquisidor',
+
     'Paladino': 'paladino',
     'Arquimago': 'arquimago_cl_4',
     'Professor': 'professor',
@@ -369,6 +384,21 @@ mapearClasseParaArquivo['Invocador (Controle)'] = 'invocador';
 
 // Mapa de classes para nomes de arquivo de emblema (alguns diferem do sprite)
 const mapearClasseParaEmblema = {
+    // 4th classes mappings
+    'Cavaleiro Draconiano': 'cavaleiro_draconiano',
+    'Guardião Imperial': 'guardiao_imperial',
+    'Magus': 'magus',
+    'Elementalista': 'elementalista',
+    'Falcão do Vento': 'falcao_do_vento',
+    'Maestro': 'maestro',
+    'Diva': 'diva',
+    'Mandraque': 'mandraque',
+    'Cientista': 'cientista',
+    'Executor': 'executor',
+    'Engenheiro': 'engenheiro',
+    'Cardeal': 'cardeal',
+    'Inquisidor': 'inquisidor',
+
     'Paladino': 'paladinos',
     'Arquimago': 'arquimago_cl_4',
     'Professor': 'professores',
@@ -497,9 +527,9 @@ function atualizarPreviewClasse(isEdit = false) {
     const classeName = document.getElementById(`${prefix}-classe`).value;
     
     // Auto-Ajuste de Gênero para Classes Restritas
-    if(['Bardo', 'Trovador', 'Animador'].includes(classeName)) {
+    if(['Bardo', 'Menestrel', 'Trovador', 'Maestro'].includes(classeName)) {
         document.querySelector(`input[name="${prefix}-genero"][value="M"]`).checked = true;
-    } else if(['Odalisca', 'Musa'].includes(classeName)) {
+    } else if(['Odalisca', 'Cigana', 'Musa', 'Diva'].includes(classeName)) {
         document.querySelector(`input[name="${prefix}-genero"][value="F"]`).checked = true;
     }
 
